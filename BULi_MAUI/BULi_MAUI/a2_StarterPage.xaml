@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BULi_MAUI.a2_StarterPage"
+             Shell.NavBarIsVisible="False">
+
+    <!-- Same matching gradient background as the role page -->
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#050B14" Offset="0.0" />
+            <GradientStop Color="#0D1B2A" Offset="0.5" />
+            <GradientStop Color="#3E2723" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <VerticalStackLayout Spacing="30" 
+                         VerticalOptions="Center" 
+                         HorizontalOptions="Center" 
+                         Padding="30">
+
+        <!-- App Logo Image -->
+        <Image Source="transp_icon.png" 
+               WidthRequest="120" 
+               HeightRequest="120" 
+               HorizontalOptions="Center"
+               BackgroundColor="Transparent" />
+
+        <!-- Welcome Headings -->
+        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+            <Label Text="Welcome to" 
+                   TextColor="White" 
+                   FontSize="26" 
+                   HorizontalOptions="Center"
+                   />
+
+            <Label Text="BULi" 
+                   TextColor="White" 
+                   FontSize="34" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center" 
+                   FontFamily="Montserrat"/>
+        </VerticalStackLayout>
+
+        <!-- Subtext -->
+        <Label Text="A College of Science Exclusive"
+               TextColor="#B0C4DE"
+               FontSize="16"
+               FontAttributes="Italic"
+               HorizontalOptions="Center"
+               Margin="0, -20, 0, 20" 
+               />
+
+        <!-- Get Started Button (Navigates to MainPage/Role Page) -->
+        <Button Text="Get Started →" 
+                Clicked="OnGetStartedClicked"
+                BackgroundColor="#1E3F66"
+                TextColor="White"
+                FontSize="16"
+                FontFamily="Montserrat"
+                FontAttributes="Bold"
+                WidthRequest="280"
+                HeightRequest="55"
+                CornerRadius="25"
+                HorizontalOptions="Center" 
+                Margin="0, 50, 0, 0"/>
+
+    </VerticalStackLayout>
+</ContentPage>

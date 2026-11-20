@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BULi_MAUI.MainPage"
+             Shell.NavBarIsVisible="False">
+
+    <!-- Navy blue gradient with a warm bottom tone -->
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#050B14" Offset="0.0" />
+            <GradientStop Color="#0D1B2A" Offset="0.5" />
+            <GradientStop Color="#3E2723" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <VerticalStackLayout Spacing="35" VerticalOptions="Center" HorizontalOptions="Center" Padding="30">
+
+        <!-- Main welcome text -->
+        <Label Text="Welcome to BU Mobile"
+               TextColor="White"
+               FontSize="28"
+               FontAttributes="Bold"
+               HorizontalOptions="Center" />
+
+        <!-- Subtext -->
+        <Label Text="College of Science Exclusive Portal"
+               TextColor="#B0C4DE"
+               FontSize="16"
+               FontAttributes="Italic"
+               HorizontalOptions="Center"
+               Margin="0, -20, 0, 60" />
+
+        <!-- TEACHER ROLE CARD -->
+        <Border StrokeShape="RoundRectangle 18"
+                BackgroundColor="#2980a3"
+                WidthRequest="330"
+                HeightRequest="140"
+                Padding="20, 0"
+                HorizontalOptions="Center"
+                StrokeThickness="0">
+
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnTeacherClicked" />
+            </Border.GestureRecognizers>
+
+            <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
+                <Image Source="fcr_icon.png" WidthRequest="140" HeightRequest="140" VerticalOptions="Center"/> 
+                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                    <Label Text="FACULTY" TextColor="#FFFFFF" FontSize="22" FontAttributes="Bold" />
+                    <Label Text="Faculty Access Portal" TextColor="#FFFFF6" FontSize="13" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+        </Border>
+
+        <!-- STUDENT ROLE CARD -->
+        <Border StrokeShape="RoundRectangle 18"
+                BackgroundColor="#FFA500"
+                WidthRequest="330"
+                HeightRequest="140"
+                Padding="20, 0"
+                HorizontalOptions="Center"
+                StrokeThickness="0">
+
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnStudentClicked" />
+            </Border.GestureRecognizers>
+
+            <HorizontalStackLayout Spacing="20" VerticalOptions="Center">
+                 <Image Source="std_icon.png" WidthRequest="140" HeightRequest="140" VerticalOptions="Center"/> 
+                <VerticalStackLayout VerticalOptions="Center" Spacing="2">
+                    <Label Text="STUDENT" TextColor="#FFFFFF" FontSize="22" FontAttributes="Bold" />
+                    <Label Text="Student Portal Access" TextColor="#FFFFF6" FontSize="13" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+        </Border>
+
+        <!-- Prompt -->
+        <Label Text="Please select your role to continue"
+               TextColor="#A0AAB0"
+               FontSize="14"
+               HorizontalOptions="Center"
+               Margin="0, 10, 0, 0" />
+
+    </VerticalStackLayout>
+</ContentPage>

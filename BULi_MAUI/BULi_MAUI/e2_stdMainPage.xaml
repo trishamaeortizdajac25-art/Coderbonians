@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BULi_MAUI.e2_stdMainPage"
+             Shell.NavBarIsVisible="False">
+
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#050B14" Offset="0.0" />
+            <GradientStop Color="#0D1B2A" Offset="0.5" />
+            <GradientStop Color="#3E2723" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <Grid x:Name="RootGrid"
+          RowDefinitions="*"
+          ColumnDefinitions="*">
+
+        <!-- MAIN CONTENT -->
+        <ScrollView Padding="14, 24, 14, 24">
+            <VerticalStackLayout Spacing="16" HorizontalOptions="Fill">
+
+                <!-- HEADER -->
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" HorizontalOptions="Fill">
+                    <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                        <Label Text="Student Portal" TextColor="#FFA500" FontSize="14" FontAttributes="Bold" />
+                        <Label x:Name="lblHeaderName"
+                               Text="Student User"
+                               TextColor="White"
+                               FontSize="26"
+                               FontAttributes="Bold"
+                               LineBreakMode="TailTruncation" />
+                        <Label x:Name="lblHeaderSub"
+                               Text="ID: 20260001"
+                               TextColor="#8FA3B8"
+                               FontSize="14" />
+                    </VerticalStackLayout>
+
+                    <!-- PROFILE AVATAR -->
+                    <Border Grid.Column="1"
+                            StrokeShape="RoundRectangle 26"
+                            BackgroundColor="#15263A"
+                            Stroke="#FFA500"
+                            StrokeThickness="2"
+                            WidthRequest="52"
+                            HeightRequest="52"
+                            VerticalOptions="Center">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnToggleProfileDrawerTapped" />
+                        </Border.GestureRecognizers>
+
+                        <Grid>
+                            <Label x:Name="lblHeaderInitials"
+                                   Text="SU"
+                                   TextColor="White"
+                                   FontSize="17"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center" />
+                            <Image x:Name="imgHeaderAvatar"
+                                   Aspect="AspectFill" />
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- ACTION BUTTONS (EDIT/SAVE & DELETE ONLY) -->
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="10" HorizontalOptions="Fill">
+                    <Button x:Name="btnEditOrSave"
+                            Grid.Column="0"
+                            Text="Edit"
+                            Clicked="OnEditOrSaveClicked"
+                            BackgroundColor="#FFA500"
+                            TextColor="#0D1B2A"
+                            FontAttributes="Bold"
+                            FontSize="14"
+                            CornerRadius="10"
+                            HeightRequest="44" />
+
+                    <Button Grid.Column="1"
+                            Text="Delete"
+                            Clicked="OnDeleteStudentClicked"
+                            BackgroundColor="#3A151B"
+                            TextColor="#FF6B6B"
+                            BorderColor="#FF6B6B"
+                            BorderWidth="1.5"
+                            FontAttributes="Bold"
+                            FontSize="14"
+                            CornerRadius="10"
+                            HeightRequest="44" />
+                </Grid>
+
+                <!-- STUDENT INFO CARD -->
+                <Border HorizontalOptions="Fill"
+                        BackgroundColor="#0D1B2A"
+                        Stroke="#22364D"
+                        StrokeThickness="1.5"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="16">
+                    <VerticalStackLayout Spacing="14" HorizontalOptions="Fill">
+
+                        <Label Text="STUDENT INFORMATION"
+                               TextColor="#FFA500"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               CharacterSpacing="1" />
+
+                        <!-- PHOTO + NAME & STUDENT ID -->
+                        <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14" HorizontalOptions="Fill">
+                            <Border Grid.Column="0"
+                                    StrokeShape="RoundRectangle 14"
+                                    BackgroundColor="#15263A"
+                                    Stroke="#FFA500"
+                                    StrokeThickness="1.5"
+                                    WidthRequest="84"
+                                    HeightRequest="84"
+                                    VerticalOptions="Center">
+                                <Grid>
+                                    <Label x:Name="lblCardInitials"
+                                           Text="SU"
+                                           TextColor="White"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           HorizontalTextAlignment="Center"
+                                           VerticalTextAlignment="Center" />
+                                    <Image x:Name="imgCardPhoto"
+                                           Aspect="AspectFill" />
+                                </Grid>
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="10" VerticalOptions="Center" HorizontalOptions="Fill">
+                                <VerticalStackLayout Spacing="3">
+                                    <Label Text="Name" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                                    <Label x:Name="lblName" Text="Test Student" TextColor="White" FontSize="17" FontAttributes="Bold" />
+                                    <Entry x:Name="txtName" IsVisible="False" TextColor="White" BackgroundColor="#15263A" FontSize="16" HeightRequest="42" />
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Spacing="3">
+                                    <Label Text="Student ID" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                                    <Label x:Name="lblStudentId" Text="20260099" TextColor="#87CEEB" FontSize="16" FontAttributes="Bold" />
+                                    <Entry x:Name="txtStudentId"
+                                           IsVisible="False"
+                                           Keyboard="Numeric"
+                                           TextChanged="OnDigitsOnlyTextChanged"
+                                           Placeholder="Numbers only"
+                                           PlaceholderColor="#6C8299"
+                                           TextColor="White"
+                                           BackgroundColor="#15263A"
+                                           FontSize="16"
+                                           HeightRequest="42" />
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <BoxView HeightRequest="1" Color="#22364D" />
+
+                        <!-- PROGRAM -->
+                        <VerticalStackLayout Spacing="4" HorizontalOptions="Fill">
+                            <Label Text="Program" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                            <Label x:Name="lblProgram" Text="BS Information Technology" TextColor="White" FontSize="16" />
+                            <Entry x:Name="txtProgram" IsVisible="False" TextColor="White" BackgroundColor="#15263A" FontSize="16" HeightRequest="42" />
+                        </VerticalStackLayout>
+
+                        <!-- BIRTH DATE (DATE PICKER) & AGE -->
+                        <Grid ColumnDefinitions="1.3*, 0.7*" ColumnSpacing="12" HorizontalOptions="Fill">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="Birth Date" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                                <Label x:Name="lblBirthDate" Text="2008-06-15" TextColor="White" FontSize="16" />
+                                <DatePicker x:Name="dpBirthDate"
+                                            IsVisible="False"
+                                            Format="yyyy-MM-dd"
+                                            DateSelected="OnBirthDateSelected"
+                                            TextColor="White"
+                                            BackgroundColor="#15263A"
+                                            FontSize="15"
+                                            HeightRequest="42" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Age" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                                <Label x:Name="lblAge" Text="18" TextColor="White" FontSize="16" />
+                                <Entry x:Name="txtAge"
+                                       IsVisible="False"
+                                       IsReadOnly="True"
+                                       Keyboard="Numeric"
+                                       TextColor="#8FA3B8"
+                                       BackgroundColor="#15263A"
+                                       FontSize="16"
+                                       HeightRequest="42" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- BLOC, YEAR LEVEL & GENDER (MALE / FEMALE PICKER) -->
+                        <Grid ColumnDefinitions="0.8*, 1.1*, 1.1*" ColumnSpacing="10" HorizontalOptions="Fill">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="Bloc" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                                <Label x:Name="lblBloc" Text="A" TextColor="White" FontSize="16" />
+                                <Entry x:Name="txtBloc" IsVisible="False" TextColor="White" BackgroundColor="#15263A" FontSize="16" HeightRequest="42" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Year Level" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                                <Label x:Name="lblYearLevel" Text="1st Year" TextColor="White" FontSize="16" />
+                                <Entry x:Name="txtYearLevel" IsVisible="False" TextColor="White" BackgroundColor="#15263A" FontSize="16" HeightRequest="42" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="2" Spacing="4">
+                                <Label Text="Gender" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                                <Label x:Name="lblGender" Text="Male" TextColor="White" FontSize="16" />
+                                <Picker x:Name="pckGender"
+                                        IsVisible="False"
+                                        Title="Gender"
+                                        TitleColor="#8FA3B8"
+                                        TextColor="White"
+                                        BackgroundColor="#15263A"
+                                        FontSize="15"
+                                        HeightRequest="42">
+                                    <Picker.ItemsSource>
+                                        <x:Array Type="{x:Type x:String}">
+                                            <x:String>Male</x:String>
+                                            <x:String>Female</x:String>
+                                        </x:Array>
+                                    </Picker.ItemsSource>
+                                </Picker>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- CONTACT (NUMBERS ONLY, MAX 13 DIGITS) -->
+                        <VerticalStackLayout Spacing="4" HorizontalOptions="Fill">
+                            <Label Text="Contact" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                            <Label x:Name="lblContact" Text="09123456789" TextColor="White" FontSize="16" />
+                            <Entry x:Name="txtContact"
+                                   IsVisible="False"
+                                   Keyboard="Numeric"
+                                   MaxLength="13"
+                                   TextChanged="OnContactTextChanged"
+                                   Placeholder="Max 13 digits"
+                                   PlaceholderColor="#6C8299"
+                                   TextColor="White"
+                                   BackgroundColor="#15263A"
+                                   FontSize="16"
+                                   HeightRequest="42" />
+                        </VerticalStackLayout>
+
+                        <!-- EMAIL -->
+                        <VerticalStackLayout Spacing="4" HorizontalOptions="Fill">
+                            <Label Text="Email" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                            <Label x:Name="lblEmail" Text="test.student@example.com" TextColor="White" FontSize="16" LineBreakMode="TailTruncation" />
+                            <Entry x:Name="txtEmail" IsVisible="False" Keyboard="Email" TextColor="White" BackgroundColor="#15263A" FontSize="16" HeightRequest="42" />
+                        </VerticalStackLayout>
+
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- RIGHT SLIDE-OUT PROFILE DRAWER OVERLAY -->
+        <Grid x:Name="ProfileDrawerOverlay"
+              IsVisible="False"
+              BackgroundColor="#80000000">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnCloseProfileDrawerTapped" />
+            </Grid.GestureRecognizers>
+
+            <Border x:Name="ProfileDrawerPanel"
+                    HorizontalOptions="End"
+                    WidthRequest="260"
+                    BackgroundColor="#0D1B2A"
+                    Stroke="#22364D"
+                    StrokeThickness="1"
+                    Padding="18, 32, 18, 24">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer />
+                </Border.GestureRecognizers>
+
+                <Grid RowDefinitions="Auto, *, Auto">
+                    <VerticalStackLayout Grid.Row="0" Spacing="10">
+                        <Label Text="Profile Menu" TextColor="White" FontSize="20" FontAttributes="Bold" Margin="0,0,0,6" />
+
+                        <Button x:Name="btnViewProfile"
+                                Text="View Profile"
+                                Clicked="OnViewProfileClicked"
+                                BackgroundColor="#15263A"
+                                TextColor="White"
+                                BorderColor="#22364D"
+                                BorderWidth="1"
+                                FontAttributes="Bold"
+                                FontSize="14"
+                                CornerRadius="10"
+                                HeightRequest="46" />
+
+                        <Button x:Name="btnChangePassword"
+                                Text="Change Password"
+                                Clicked="OnChangePasswordClicked"
+                                BackgroundColor="#15263A"
+                                TextColor="White"
+                                BorderColor="#22364D"
+                                BorderWidth="1"
+                                FontAttributes="Bold"
+                                FontSize="14"
+                                CornerRadius="10"
+                                HeightRequest="46" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="2" Spacing="10" VerticalOptions="End">
+                        <Button x:Name="btnThemeToggle"
+                                Text="Light Mode"
+                                Clicked="OnToggleThemeClicked"
+                                BackgroundColor="#15263A"
+                                TextColor="#87CEEB"
+                                BorderColor="#22364D"
+                                BorderWidth="1"
+                                FontAttributes="Bold"
+                                FontSize="14"
+                                CornerRadius="10"
+                                HeightRequest="46" />
+
+                        <Button x:Name="btnLogOut"
+                                Text="Log Out"
+                                Clicked="OnLogOutClicked"
+                                BackgroundColor="#3A151B"
+                                TextColor="#FF6B6B"
+                                BorderColor="#FF6B6B"
+                                BorderWidth="1"
+                                FontAttributes="Bold"
+                                FontSize="14"
+                                CornerRadius="10"
+                                HeightRequest="46" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- VIEW PROFILE CARD OVERLAY -->
+        <Grid x:Name="ViewProfileOverlay"
+              IsVisible="False"
+              BackgroundColor="#B3000000"
+              Padding="16">
+            <Border BackgroundColor="#0D1B2A"
+                    Stroke="#22364D"
+                    StrokeThickness="1.5"
+                    StrokeShape="RoundRectangle 18"
+                    Padding="20"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Center">
+                <VerticalStackLayout Spacing="14">
+
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Student Profile" TextColor="White" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" />
+                        <Button Grid.Column="1"
+                                Text="Close"
+                                Clicked="OnCloseViewProfileClicked"
+                                BackgroundColor="Transparent"
+                                TextColor="#8FA3B8"
+                                FontSize="14"
+                                HeightRequest="36"
+                                Padding="8,0" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14">
+                        <Border StrokeShape="RoundRectangle 36"
+                                BackgroundColor="#15263A"
+                                Stroke="#FFA500"
+                                StrokeThickness="2"
+                                WidthRequest="72"
+                                HeightRequest="72"
+                                VerticalOptions="Center">
+                            <Grid>
+                                <Label x:Name="lblModalInitials"
+                                       Text="SU"
+                                       TextColor="White"
+                                       FontSize="22"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center" />
+                                <Image x:Name="imgModalPhoto"
+                                       Aspect="AspectFill" />
+                            </Grid>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                            <Label Text="Profile Photo" TextColor="#87CEEB" FontSize="13" FontAttributes="Bold" />
+                            <HorizontalStackLayout Spacing="8">
+                                <Button Text="Add Image"
+                                        Clicked="OnAddProfileImageClicked"
+                                        BackgroundColor="#FFA500"
+                                        TextColor="#0D1B2A"
+                                        FontAttributes="Bold"
+                                        FontSize="13"
+                                        CornerRadius="10"
+                                        HeightRequest="38"
+                                        Padding="12,0" />
+
+                                <Button Text="Remove"
+                                        Clicked="OnRemoveProfileImageClicked"
+                                        BackgroundColor="#3A151B"
+                                        TextColor="#FF6B6B"
+                                        BorderColor="#FF6B6B"
+                                        BorderWidth="1"
+                                        FontAttributes="Bold"
+                                        FontSize="13"
+                                        CornerRadius="10"
+                                        HeightRequest="38"
+                                        Padding="12,0" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <BoxView HeightRequest="1" Color="#22364D" />
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Username" TextColor="#B0C4DE" FontSize="13" />
+                        <Border BackgroundColor="#15263A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="12,10">
+                            <Label x:Name="lblProfileUsername" Text="student" TextColor="White" FontSize="15" FontAttributes="Bold" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Password" TextColor="#B0C4DE" FontSize="13" />
+                        <Border BackgroundColor="#15263A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="12,10">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label x:Name="lblProfilePassword"
+                                       Text="••••••••"
+                                       TextColor="#DCE6F2"
+                                       FontSize="15"
+                                       VerticalOptions="Center" />
+                                <Button x:Name="btnTogglePasswordVisibility"
+                                        Grid.Column="1"
+                                        Text="Show"
+                                        Clicked="OnTogglePasswordVisibilityClicked"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#87CEEB"
+                                        FontSize="13"
+                                        FontAttributes="Bold"
+                                        HeightRequest="32"
+                                        Padding="6,0" />
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+    </Grid>
+</ContentPage>

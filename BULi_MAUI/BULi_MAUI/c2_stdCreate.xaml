@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BULi_MAUI.c2_stdCreate"
+             Shell.NavBarIsVisible="False">
+
+    <!-- Matching Rich Navy Blue Gradient Background -->
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#050B14" Offset="0.0" />
+            <GradientStop Color="#0D1B2A" Offset="0.5" />
+            <GradientStop Color="#3E2723" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    
+    <!-- Centered Layout Container -->
+    <VerticalStackLayout VerticalOptions="Center" 
+                         HorizontalOptions="Center" 
+                         Padding="20" 
+                         Spacing="0">
+
+        <!-- Main Form Card Container (Centered) -->
+        <Border StrokeShape="RoundRectangle 24"
+                BackgroundColor="#991E3F66" 
+                WidthRequest="350"
+                Padding="25, 25"
+                StrokeThickness="0">
+
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,10" Radius="20" Opacity="0.4"/>
+            </Border.Shadow>
+
+            <VerticalStackLayout Spacing="16">
+
+                <!-- TOP SECTION: Title and Subtext -->
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Create Account" 
+                           TextColor="White" 
+                           FontSize="26" 
+                           FontAttributes="Bold" />
+
+                    <Label Text="Sign up to get started!" 
+                           TextColor="#B0C4DE" 
+                           FontSize="14" />
+                </VerticalStackLayout>
+
+                <!-- INPUT FIELDS SECTION -->
+                <VerticalStackLayout Spacing="12">
+
+                    <!-- Full Name / Username Field -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Username" TextColor="WhiteSmoke" FontSize="12" />
+                        <Border StrokeShape="RoundRectangle 22"
+                                BackgroundColor="#264D7A"
+                                StrokeThickness="0"
+                                HeightRequest="43"
+                                Padding="15, 0">
+                            <Entry x:Name="txtUsername" 
+                                   Placeholder="Choose a username" 
+                                   PlaceholderColor="#A0AAB0"
+                                   TextColor="White" 
+                                   BackgroundColor="Transparent"
+                                   VerticalOptions="Center"
+                                   ClearButtonVisibility="WhileEditing" />
+                        </Border>
+                    </VerticalStackLayout>
+
+
+                    <!-- Password Field -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Password" TextColor="WhiteSmoke" FontSize="12" />
+                        <Border StrokeShape="RoundRectangle 22"
+                                BackgroundColor="#264D7A"
+                                StrokeThickness="0"
+                                HeightRequest="43"
+                                Padding="15, 0">
+                            <Entry x:Name="txtPassword" 
+                                   Placeholder="Create a password" 
+                                   PlaceholderColor="#A0AAB0"
+                                   TextColor="White" 
+                                   BackgroundColor="Transparent"
+                                   IsPassword="True"
+                                   VerticalOptions="Center"
+                                   ClearButtonVisibility="WhileEditing" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+
+                <!-- REMEMBEr ME -->
+                <Grid ColumnDefinitions="Auto, *" VerticalOptions="Center" Margin="0, 2, 0, 0">
+                    <CheckBox x:Name="chkTerms" 
+                              Color="White" 
+                              VerticalOptions="Center" />
+                    <Label Text="Remember Me" 
+                           TextColor="WhiteSmoke" 
+                           FontSize="12" 
+                           Grid.Column="1" 
+                           VerticalTextAlignment="Center" />
+                </Grid>
+
+                <!-- SIGN UP BUTTON -->
+                <Button x:Name="btnSignUp" 
+                        Text="Sign Up" 
+                        Clicked="OnSignUpClicked"
+                        BackgroundColor="#0D1B2A" 
+                        TextColor="White" 
+                        FontAttributes="Bold"
+                        CornerRadius="12"
+                        HeightRequest="48"
+                        Margin="0, 2, 0, 0" />
+
+                <!-- ALREADY HAVE AN ACCOUNT ROW -->
+                <HorizontalStackLayout HorizontalOptions="Center" 
+                                       Spacing="5" 
+                                       Margin="0, 5, 0, 0">
+                    <Label Text="Already have an account?" 
+                           TextColor="#B0C4DE" 
+                           FontSize="13" 
+                           VerticalTextAlignment="Center" />
+
+                    <Label Text="Sign In" 
+                           TextColor="White" 
+                           FontAttributes="Bold" 
+                           TextDecorations="Underline"
+                           FontSize="13" 
+                           VerticalTextAlignment="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSignInTapped" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+        </Border>
+
+    </VerticalStackLayout>
+</ContentPage>

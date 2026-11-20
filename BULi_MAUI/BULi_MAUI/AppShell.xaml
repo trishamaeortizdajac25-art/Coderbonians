@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:BULi_MAUI"
+       BackgroundColor="#050B14"
+       ForegroundColor="#FFA500"
+       TitleColor="White"
+       UnselectedColor="#80AAB0"
+       x:Class="BULi_MAUI.AppShell">
+
+    <!-- Default Entry: Role Selection Page -->
+    <ShellContent
+        ContentTemplate="{DataTemplate local:MainPage}"
+        Route="RolePage" />
+
+    <!-- Teacher Navigation: Records (Left) | Overview (Center) | Analytics (Right) - Icons Only -->
+    <TabBar Route="MainTabs">
+        <Tab Icon="records.png" Route="RecordsTab">
+            <ShellContent ContentTemplate="{DataTemplate local:d1_Records}" Route="d1_Records" />
+        </Tab>
+
+        <Tab Icon="overview.png" Route="HomeTab">
+            <ShellContent ContentTemplate="{DataTemplate local:c1_HomePage}" Route="c1_HomePage" />
+        </Tab>
+
+        <Tab Icon="analytics.png" Route="AnalyticsTab">
+            <ShellContent ContentTemplate="{DataTemplate local:e1_Graphs}" Route="e1_Graphs" />
+        </Tab>
+    </TabBar>
+
+    <!-- Student Main Page -->
+    <ShellContent
+        ContentTemplate="{DataTemplate local:e2_stdMainPage}"
+        Route="StudentMain" />
+
+</Shell>

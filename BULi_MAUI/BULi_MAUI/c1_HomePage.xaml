@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:BULi_MAUI"
+             xmlns:sp="clr-namespace:ScottPlot.Maui;assembly=ScottPlot.Maui"
+             x:Class="BULi_MAUI.c1_HomePage"
+             Shell.NavBarIsVisible="False">
+
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#050B14" Offset="0.0" />
+            <GradientStop Color="#0D1B2A" Offset="0.5" />
+            <GradientStop Color="#3E2723" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <Grid x:Name="RootGrid">
+
+        <!-- MAIN HOME PAGE CONTENT -->
+        <ScrollView Padding="18, 26, 18, 20">
+            <VerticalStackLayout Spacing="14">
+
+                <!-- HEADER: HELLO ADMIN + OVERVIEW TITLE + PROFILE PICTURE -->
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                        <Label Text="Hello, Admin!" TextColor="#FFA500" FontSize="13" FontAttributes="Bold" />
+                        <Label Text="Overview" TextColor="White" FontSize="24" FontAttributes="Bold" />
+                        <Label x:Name="lblTotalStudents" Text="0 Total Students" TextColor="#8FA3B8" FontSize="12" />
+                    </VerticalStackLayout>
+
+                    <!-- PROFILE PICTURE BUTTON -->
+                    <Border Grid.Column="1"
+                            StrokeShape="RoundRectangle 24"
+                            BackgroundColor="#15263A"
+                            Stroke="#FFA500"
+                            StrokeThickness="1.5"
+                            WidthRequest="48"
+                            HeightRequest="48"
+                            VerticalOptions="Center">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnToggleProfileDrawerTapped" />
+                        </Border.GestureRecognizers>
+
+                        <Grid>
+                            <Label x:Name="lblAdminInitials"
+                                   Text="AD"
+                                   TextColor="White"
+                                   FontSize="15"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalTextAlignment="Center" />
+                            <Image x:Name="imgAdminProfile"
+                                   Aspect="AspectFill" />
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- INDIVIDUAL PROGRAM PANELS -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="ENROLLED PER PROGRAM"
+                           TextColor="#FFA500"
+                           FontSize="11"
+                           FontAttributes="Bold"
+                           CharacterSpacing="1" />
+
+                    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8">
+                        <Border Grid.Column="0"
+                                BackgroundColor="#0D1B2A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="10">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="BSIT" TextColor="#87CEEB" FontSize="11" FontAttributes="Bold" />
+                                <Label x:Name="lblCountBSIT" Text="0" TextColor="#FFA500" FontSize="18" FontAttributes="Bold" />
+                                <Label Text="Info Tech" TextColor="#8FA3B8" FontSize="10" LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                BackgroundColor="#0D1B2A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="10">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="BSCS" TextColor="#87CEEB" FontSize="11" FontAttributes="Bold" />
+                                <Label x:Name="lblCountBSCS" Text="0" TextColor="#FFA500" FontSize="18" FontAttributes="Bold" />
+                                <Label Text="Comp Sci" TextColor="#8FA3B8" FontSize="10" LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="2"
+                                BackgroundColor="#0D1B2A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="10">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="BSMET" TextColor="#87CEEB" FontSize="11" FontAttributes="Bold" />
+                                <Label x:Name="lblCountBSMET" Text="0" TextColor="#FFA500" FontSize="18" FontAttributes="Bold" />
+                                <Label Text="Meteorology" TextColor="#8FA3B8" FontSize="10" LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
+                        <Border Grid.Column="0"
+                                BackgroundColor="#0D1B2A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="10">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="BSBIO" TextColor="#87CEEB" FontSize="11" FontAttributes="Bold" />
+                                <Label x:Name="lblCountBSBIO" Text="0" TextColor="#FFA500" FontSize="18" FontAttributes="Bold" />
+                                <Label Text="Biology" TextColor="#8FA3B8" FontSize="10" LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                BackgroundColor="#0D1B2A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="10">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="BSCHEM" TextColor="#87CEEB" FontSize="11" FontAttributes="Bold" />
+                                <Label x:Name="lblCountBSCHEM" Text="0" TextColor="#FFA500" FontSize="18" FontAttributes="Bold" />
+                                <Label Text="Chemistry" TextColor="#8FA3B8" FontSize="10" LineBreakMode="TailTruncation" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- SMALL SCOTTPLOT IN BETWEEN -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="PROGRAM DISTRIBUTION"
+                           TextColor="#87CEEB"
+                           FontSize="11"
+                           FontAttributes="Bold"
+                           CharacterSpacing="1" />
+
+                    <Border BackgroundColor="#0D1B2A"
+                            Stroke="#22364D"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 14"
+                            Padding="10"
+                            HeightRequest="175">
+                        <Grid RowDefinitions="Auto, *">
+                            <Label Grid.Row="0"
+                                   Text="Enrolled Students by Program"
+                                   TextColor="#DCE6F2"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   Margin="4,0,0,4" />
+
+                            <sp:MauiPlot x:Name="overviewPlot"
+                                         Grid.Row="1"
+                                         BackgroundColor="#0D1B2A" />
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- RECENT STUDENT RECORDS (MAX 4) + SEE ALL -->
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="RECENT STUDENT RECORDS"
+                               TextColor="#87CEEB"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               CharacterSpacing="1"
+                               VerticalOptions="Center" />
+
+                        <Button Grid.Column="1"
+                                Text="See All"
+                                Clicked="OnSeeAllRecordsClicked"
+                                BackgroundColor="Transparent"
+                                TextColor="#FFA500"
+                                FontAttributes="Bold"
+                                FontSize="12"
+                                HeightRequest="28"
+                                Padding="6,0" />
+                    </Grid>
+
+                    <CollectionView x:Name="recentStudentsView"
+                                    SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="local:StudentRecord">
+                                <Border BackgroundColor="#15263A"
+                                        Stroke="#22364D"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 14"
+                                        Padding="12"
+                                        Margin="0,0,0,8">
+                                    <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
+                                        <Border Grid.Column="0"
+                                                StrokeShape="RoundRectangle 20"
+                                                BackgroundColor="#0D1B2A"
+                                                Stroke="#FFA500"
+                                                StrokeThickness="1"
+                                                WidthRequest="40"
+                                                HeightRequest="40"
+                                                VerticalOptions="Center">
+                                            <Grid>
+                                                <Label Text="{Binding Initials}"
+                                                       TextColor="White"
+                                                       FontSize="12"
+                                                       FontAttributes="Bold"
+                                                       HorizontalTextAlignment="Center"
+                                                       VerticalTextAlignment="Center" />
+                                                <Image Source="{Binding PhotoSource}" Aspect="AspectFill" />
+                                            </Grid>
+                                        </Border>
+
+                                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                            <Label Text="{Binding DisplayName}"
+                                                   TextColor="White"
+                                                   FontSize="13"
+                                                   FontAttributes="Bold"
+                                                   LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding SubtitleText}"
+                                                   TextColor="#87CEEB"
+                                                   FontSize="11"
+                                                   LineBreakMode="TailTruncation" />
+                                        </VerticalStackLayout>
+
+                                        <Border Grid.Column="2"
+                                                BackgroundColor="{Binding StatusBadgeBackground}"
+                                                StrokeShape="RoundRectangle 8"
+                                                Padding="8,4"
+                                                StrokeThickness="0"
+                                                VerticalOptions="Center">
+                                            <Label Text="{Binding Status}"
+                                                   TextColor="{Binding StatusTextColor}"
+                                                   FontSize="10"
+                                                   FontAttributes="Bold" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- RIGHT SLIDE-OUT PROFILE DRAWER OVERLAY -->
+        <Grid x:Name="ProfileDrawerOverlay"
+              IsVisible="False"
+              BackgroundColor="#80000000">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnCloseProfileDrawerTapped" />
+            </Grid.GestureRecognizers>
+
+            <Border x:Name="ProfileDrawerPanel"
+                    HorizontalOptions="End"
+                    WidthRequest="260"
+                    BackgroundColor="#0D1B2A"
+                    Stroke="#22364D"
+                    StrokeThickness="1"
+                    Padding="18, 32, 18, 24">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer />
+                </Border.GestureRecognizers>
+
+                <Grid RowDefinitions="Auto, *, Auto">
+                    <!-- TOP: VIEW PROFILE & CHANGE PASSWORD -->
+                    <VerticalStackLayout Grid.Row="0" Spacing="10">
+                        <Label Text="Profile Menu" TextColor="White" FontSize="18" FontAttributes="Bold" Margin="0,0,0,6" />
+
+                        <Button x:Name="btnViewProfile"
+                                Text="View Profile"
+                                Clicked="OnViewProfileClicked"
+                                BackgroundColor="#15263A"
+                                TextColor="White"
+                                BorderColor="#22364D"
+                                BorderWidth="1"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                HeightRequest="44" />
+
+                        <Button x:Name="btnChangePassword"
+                                Text="Change Password"
+                                Clicked="OnChangePasswordClicked"
+                                BackgroundColor="#15263A"
+                                TextColor="White"
+                                BorderColor="#22364D"
+                                BorderWidth="1"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                HeightRequest="44" />
+                    </VerticalStackLayout>
+
+                    <!-- BOTTOM: DARK MODE / LIGHT MODE + LOG OUT PINNED AT THE BOTTOM -->
+                    <VerticalStackLayout Grid.Row="2" Spacing="10" VerticalOptions="End">
+                        <Button x:Name="btnThemeToggle"
+                                Text="Light Mode"
+                                Clicked="OnToggleThemeClicked"
+                                BackgroundColor="#15263A"
+                                TextColor="#87CEEB"
+                                BorderColor="#22364D"
+                                BorderWidth="1"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                HeightRequest="44" />
+
+                        <Button x:Name="btnLogOut"
+                                Text="Log Out"
+                                Clicked="OnLogOutClicked"
+                                BackgroundColor="#3A151B"
+                                TextColor="#FF6B6B"
+                                BorderColor="#FF6B6B"
+                                BorderWidth="1"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                HeightRequest="44" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- VIEW PROFILE CARD OVERLAY -->
+        <Grid x:Name="ViewProfileOverlay"
+              IsVisible="False"
+              BackgroundColor="#B3000000"
+              Padding="20">
+            <Border BackgroundColor="#0D1B2A"
+                    Stroke="#22364D"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 18"
+                    Padding="20"
+                    VerticalOptions="Center">
+                <VerticalStackLayout Spacing="14">
+
+                    <!-- HEADER -->
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Teacher Profile" TextColor="White" FontSize="18" FontAttributes="Bold" VerticalOptions="Center" />
+                        <Button Grid.Column="1"
+                                Text="Close"
+                                Clicked="OnCloseViewProfileClicked"
+                                BackgroundColor="Transparent"
+                                TextColor="#8FA3B8"
+                                FontSize="12"
+                                HeightRequest="32"
+                                Padding="8,0" />
+                    </Grid>
+
+                    <!-- AVATAR + ADD IMAGE / REMOVE -->
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14">
+                        <Border StrokeShape="RoundRectangle 34"
+                                BackgroundColor="#15263A"
+                                Stroke="#FFA500"
+                                StrokeThickness="1.5"
+                                WidthRequest="68"
+                                HeightRequest="68"
+                                VerticalOptions="Center">
+                            <Grid>
+                                <Label x:Name="lblModalProfileInitials"
+                                       Text="AD"
+                                       TextColor="White"
+                                       FontSize="20"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center" />
+                                <Image x:Name="imgModalProfilePhoto"
+                                       Aspect="AspectFill" />
+                            </Grid>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center">
+                            <Label Text="Profile Photo" TextColor="#87CEEB" FontSize="12" FontAttributes="Bold" />
+                            <HorizontalStackLayout Spacing="8">
+                                <Button Text="Add Image"
+                                        Clicked="OnAddProfileImageClicked"
+                                        BackgroundColor="#FFA500"
+                                        TextColor="#0D1B2A"
+                                        FontAttributes="Bold"
+                                        FontSize="12"
+                                        CornerRadius="10"
+                                        HeightRequest="36"
+                                        Padding="12,0" />
+
+                                <Button Text="Remove"
+                                        Clicked="OnRemoveProfileImageClicked"
+                                        BackgroundColor="#3A151B"
+                                        TextColor="#FF6B6B"
+                                        BorderColor="#FF6B6B"
+                                        BorderWidth="1"
+                                        FontAttributes="Bold"
+                                        FontSize="12"
+                                        CornerRadius="10"
+                                        HeightRequest="36"
+                                        Padding="12,0" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <BoxView HeightRequest="1" Color="#22364D" />
+
+                    <!-- USERNAME & PASSWORD -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Username" TextColor="#B0C4DE" FontSize="12" />
+                        <Border BackgroundColor="#15263A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="12,10">
+                            <Label x:Name="lblProfileUsername" Text="admin" TextColor="White" FontSize="13" FontAttributes="Bold" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Password" TextColor="#B0C4DE" FontSize="12" />
+                        <Border BackgroundColor="#15263A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="12,10">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label x:Name="lblProfilePassword"
+                                       Text="••••••••"
+                                       TextColor="#DCE6F2"
+                                       FontSize="13"
+                                       VerticalOptions="Center" />
+                                <Button x:Name="btnTogglePasswordVisibility"
+                                        Grid.Column="1"
+                                        Text="Show"
+                                        Clicked="OnTogglePasswordVisibilityClicked"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#87CEEB"
+                                        FontSize="11"
+                                        FontAttributes="Bold"
+                                        HeightRequest="28"
+                                        Padding="6,0" />
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+    </Grid>
+</ContentPage>

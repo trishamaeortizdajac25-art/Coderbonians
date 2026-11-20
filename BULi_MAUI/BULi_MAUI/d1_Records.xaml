@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:BULi_MAUI"
+             x:Class="BULi_MAUI.d1_Records"
+             x:Name="RootPage"
+             Shell.NavBarIsVisible="False">
+
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#050B14" Offset="0.0" />
+            <GradientStop Color="#0D1B2A" Offset="0.5" />
+            <GradientStop Color="#3E2723" Offset="1.0" />
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <Grid>
+        <!-- MAIN RECORDS LAYOUT -->
+        <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="20, 28, 20, 20" RowSpacing="12">
+
+            <!-- ROW 0: HEADER + ADD NEW + EDIT -->
+            <Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto" ColumnSpacing="10">
+                <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                    <Label Text="Student Records" TextColor="White" FontSize="22" FontAttributes="Bold" />
+                    <Label x:Name="lblRecordSummary" Text="0 Records" TextColor="#8FA3B8" FontSize="12" />
+                </VerticalStackLayout>
+
+                <Button x:Name="btnAddNew"
+                        Grid.Column="1"
+                        Text="+ Add New"
+                        Clicked="OnOpenAddModalClicked"
+                        BackgroundColor="#FFA500"
+                        TextColor="#0D1B2A"
+                        FontAttributes="Bold"
+                        FontSize="13"
+                        CornerRadius="12"
+                        HeightRequest="40"
+                        Padding="14,0" />
+
+                <Button x:Name="btnEditMode"
+                        Grid.Column="2"
+                        Text="Edit"
+                        Clicked="OnToggleEditModeClicked"
+                        BackgroundColor="#15263A"
+                        TextColor="White"
+                        BorderColor="#22364D"
+                        BorderWidth="1"
+                        FontAttributes="Bold"
+                        FontSize="13"
+                        CornerRadius="12"
+                        HeightRequest="40"
+                        Padding="14,0" />
+            </Grid>
+
+            <!-- ROW 1: SINGLE FILTERS TOGGLE BUTTON + COLLAPSIBLE AO3-STYLE FILTER PANEL -->
+            <VerticalStackLayout Grid.Row="1" Spacing="10">
+                <HorizontalStackLayout Spacing="10" HorizontalOptions="End">
+                    <Button x:Name="btnFilterToggle"
+                            Text="Filters v"
+                            Clicked="OnToggleFiltersClicked"
+                            BackgroundColor="#15263A"
+                            TextColor="#87CEEB"
+                            BorderColor="#22364D"
+                            BorderWidth="1"
+                            FontAttributes="Bold"
+                            FontSize="12"
+                            CornerRadius="10"
+                            HeightRequest="36"
+                            Padding="14,0" />
+
+                    <Button x:Name="btnSelectAll"
+                            Text="Select All"
+                            IsVisible="False"
+                            Clicked="OnSelectAllClicked"
+                            BackgroundColor="#15263A"
+                            TextColor="#FFA500"
+                            BorderColor="#22364D"
+                            BorderWidth="1"
+                            FontSize="12"
+                            CornerRadius="10"
+                            HeightRequest="36"
+                            Padding="12,0" />
+                </HorizontalStackLayout>
+
+                <!-- AO3-style collapsible filter panel -->
+                <Border x:Name="FilterPanel"
+                        IsVisible="False"
+                        BackgroundColor="#0D1B2A"
+                        Stroke="#22364D"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 14"
+                        Padding="14">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="FILTER RECORDS" TextColor="#8FA3B8" FontSize="11" FontAttributes="Bold" CharacterSpacing="1" />
+
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Status" TextColor="#B0C4DE" FontSize="12" />
+                                <Picker x:Name="pickerFilterStatus"
+                                        Title="All Statuses"
+                                        TextColor="White"
+                                        TitleColor="#6E859E"
+                                        BackgroundColor="#15263A"
+                                        SelectedIndexChanged="OnFilterChanged">
+                                    <Picker.ItemsSource>
+                                        <x:Array Type="{x:Type x:String}">
+                                            <x:String>All</x:String>
+                                            <x:String>Active</x:String>
+                                            <x:String>Graduated</x:String>
+                                            <x:String>On Leave</x:String>
+                                            <x:String>Dropped</x:String>
+                                        </x:Array>
+                                    </Picker.ItemsSource>
+                                </Picker>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Program" TextColor="#B0C4DE" FontSize="12" />
+                                <Picker x:Name="pickerFilterProgram"
+                                        Title="All Programs"
+                                        TextColor="White"
+                                        TitleColor="#6E859E"
+                                        BackgroundColor="#15263A"
+                                        SelectedIndexChanged="OnFilterChanged">
+                                    <Picker.ItemsSource>
+                                        <x:Array Type="{x:Type x:String}">
+                                            <x:String>All</x:String>
+                                            <x:String>BS Information Technology</x:String>
+                                            <x:String>BS Computer Science</x:String>
+                                            <x:String>BS Meteorology</x:String>
+                                            <x:String>BS Biology</x:String>
+                                            <x:String>BS Chemistry</x:String>
+                                        </x:Array>
+                                    </Picker.ItemsSource>
+                                </Picker>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Year Level" TextColor="#B0C4DE" FontSize="12" />
+                                <Picker x:Name="pickerFilterYear"
+                                        Title="All Years"
+                                        TextColor="White"
+                                        TitleColor="#6E859E"
+                                        BackgroundColor="#15263A"
+                                        SelectedIndexChanged="OnFilterChanged">
+                                    <Picker.ItemsSource>
+                                        <x:Array Type="{x:Type x:String}">
+                                            <x:String>All</x:String>
+                                            <x:String>1st Year</x:String>
+                                            <x:String>2nd Year</x:String>
+                                            <x:String>3rd Year</x:String>
+                                            <x:String>4th Year</x:String>
+                                            <x:String>5th Year</x:String>
+                                            <x:String>6th Year</x:String>
+                                        </x:Array>
+                                    </Picker.ItemsSource>
+                                </Picker>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Block" TextColor="#B0C4DE" FontSize="12" />
+                                <Entry x:Name="txtFilterBlock"
+                                       Placeholder="e.g. A, B"
+                                       PlaceholderColor="#6E859E"
+                                       TextColor="White"
+                                       BackgroundColor="#15263A"
+                                       TextChanged="OnFilterChanged" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Button Text="Reset Filters"
+                                Clicked="OnResetFiltersClicked"
+                                BackgroundColor="#15263A"
+                                TextColor="#B0C4DE"
+                                CornerRadius="8"
+                                HeightRequest="34"
+                                FontSize="12"
+                                HorizontalOptions="End"
+                                Padding="12,0" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- ROW 2: COLLECTION VIEW (DISPLAY ONLY ON CARDS) -->
+            <CollectionView x:Name="studentCollectionView"
+                            Grid.Row="2"
+                            SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="local:StudentRecord">
+                        <Border BackgroundColor="#15263A"
+                                Stroke="#22364D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 14"
+                                Padding="14"
+                                Margin="0,0,0,10">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnStudentCardTapped" CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+
+                            <Grid ColumnDefinitions="Auto, Auto, *, Auto" ColumnSpacing="12">
+                                <CheckBox Grid.Column="0"
+                                          IsVisible="{Binding Source={x:Reference RootPage}, Path=IsEditMode}"
+                                          IsChecked="{Binding IsSelected}"
+                                          Color="#FFA500"
+                                          VerticalOptions="Center" />
+
+                                <Border Grid.Column="1"
+                                        StrokeShape="RoundRectangle 22"
+                                        BackgroundColor="#0D1B2A"
+                                        Stroke="#FFA500"
+                                        StrokeThickness="1"
+                                        WidthRequest="44"
+                                        HeightRequest="44"
+                                        VerticalOptions="Center">
+                                    <Grid>
+                                        <Label Text="{Binding Initials}"
+                                               TextColor="White"
+                                               FontAttributes="Bold"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center" />
+                                        <Image Source="{Binding PhotoSource}"
+                                               Aspect="AspectFill" />
+                                    </Grid>
+                                </Border>
+
+                                <VerticalStackLayout Grid.Column="2" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding DisplayName}" TextColor="White" FontSize="14" FontAttributes="Bold" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding SubtitleText}" TextColor="#87CEEB" FontSize="11" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding ContactNumber}" TextColor="#8FA3B8" FontSize="11" LineBreakMode="TailTruncation" />
+                                </VerticalStackLayout>
+
+                                <Border Grid.Column="3"
+                                        BackgroundColor="{Binding StatusBadgeBackground}"
+                                        StrokeShape="RoundRectangle 8"
+                                        Padding="8,4"
+                                        StrokeThickness="0"
+                                        VerticalOptions="Center">
+                                    <Label Text="{Binding Status}"
+                                           TextColor="{Binding StatusTextColor}"
+                                           FontSize="11"
+                                           FontAttributes="Bold" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- ROW 3: BOTTOM-RIGHT DELETE BUTTON FOR SELECTED RECORDS -->
+            <Grid Grid.Row="3" ColumnDefinitions="*, Auto">
+                <Button x:Name="btnDeleteSelected"
+                        Grid.Column="1"
+                        Text="Delete Selected"
+                        IsVisible="False"
+                        Clicked="OnDeleteSelectedClicked"
+                        BackgroundColor="#3A151B"
+                        TextColor="#FF6B6B"
+                        BorderColor="#FF6B6B"
+                        BorderWidth="1"
+                        FontAttributes="Bold"
+                        FontSize="13"
+                        CornerRadius="12"
+                        HeightRequest="42"
+                        Padding="16,0" />
+            </Grid>
+        </Grid>
+
+        <!-- STUDENT DETAIL CARD OVERLAY -->
+        <Grid x:Name="StudentDetailOverlay"
+              IsVisible="False"
+              BackgroundColor="#B3000000"
+              Padding="20">
+            <Border BackgroundColor="#0D1B2A"
+                    Stroke="#22364D"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 18"
+                    Padding="20"
+                    VerticalOptions="Center">
+                <VerticalStackLayout Spacing="14">
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14">
+                        <Border StrokeShape="RoundRectangle 30"
+                                BackgroundColor="#15263A"
+                                Stroke="#FFA500"
+                                StrokeThickness="1.5"
+                                WidthRequest="60"
+                                HeightRequest="60">
+                            <Grid>
+                                <Label x:Name="lblDetailInitials" Text="MS" TextColor="White" FontSize="18" FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center" />
+                                <Image x:Name="imgDetailPhoto" Aspect="AspectFill" />
+                            </Grid>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                            <Label x:Name="lblDetailName" Text="-" TextColor="White" FontSize="18" FontAttributes="Bold" />
+                            <Label x:Name="lblDetailStudentId" Text="Student ID: -" TextColor="#87CEEB" FontSize="12" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <BoxView HeightRequest="1" Color="#22364D" />
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label x:Name="lblDetailProgram" Text="Program: -" TextColor="#DCE6F2" FontSize="13" />
+                        <Label x:Name="lblDetailYearBlock" Text="Year &amp; Block: -" TextColor="#DCE6F2" FontSize="13" />
+                        <Label x:Name="lblDetailGenderBirthdate" Text="Gender &amp; Birthdate: -" TextColor="#DCE6F2" FontSize="13" />
+                        <Label x:Name="lblDetailContact" Text="Contact Number: -" TextColor="#DCE6F2" FontSize="13" />
+                        <Label x:Name="lblDetailEmail" Text="Email: -" TextColor="#DCE6F2" FontSize="13" />
+                        <Label x:Name="lblDetailAddress" Text="Address: -" TextColor="#DCE6F2" FontSize="13" />
+                        <Label x:Name="lblDetailStatus" Text="Status: -" TextColor="#FFA500" FontSize="13" FontAttributes="Bold" />
+                    </VerticalStackLayout>
+
+                    <Button Text="Return to Records"
+                            Clicked="OnReturnToRecordsClicked"
+                            BackgroundColor="#15263A"
+                            TextColor="White"
+                            BorderColor="#22364D"
+                            BorderWidth="1"
+                            FontAttributes="Bold"
+                            CornerRadius="12"
+                            HeightRequest="44"
+                            Margin="0,6,0,0" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- CRUD FORM PANEL -->
+        <Grid x:Name="CrudFormOverlay"
+              IsVisible="False"
+              BackgroundColor="#B3000000"
+              Padding="20">
+            <Border BackgroundColor="#0D1B2A"
+                    Stroke="#22364D"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 18"
+                    Padding="20"
+                    VerticalOptions="Center">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label x:Name="lblCrudTitle" Text="Manage Student Record" TextColor="White" FontSize="18" FontAttributes="Bold" />
+                        <Button Grid.Column="1"
+                                Text="Close"
+                                Clicked="OnCloseCrudOverlayClicked"
+                                BackgroundColor="Transparent"
+                                TextColor="#8FA3B8"
+                                FontSize="12"
+                                HeightRequest="32"
+                                Padding="8,0" />
+                    </Grid>
+
+                    <Label x:Name="lblCrudSelectionHint"
+                           Text="Single selection enables all fields; multiple selection locks Student ID and Name."
+                           TextColor="#8FA3B8"
+                           FontSize="11" />
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Student ID" TextColor="#B0C4DE" FontSize="12" />
+                        <Entry x:Name="txtStudentId"
+                               Placeholder="e.g. 2026-0001"
+                               PlaceholderColor="#6E859E"
+                               TextColor="White"
+                               BackgroundColor="#15263A" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Student Name" TextColor="#B0C4DE" FontSize="12" />
+                        <Entry x:Name="txtStudentName"
+                               Placeholder="Full Name"
+                               PlaceholderColor="#6E859E"
+                               TextColor="White"
+                               BackgroundColor="#15263A" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Bloc" TextColor="#B0C4DE" FontSize="12" />
+                        <Entry x:Name="txtBloc"
+                               Placeholder="e.g. A, B"
+                               PlaceholderColor="#6E859E"
+                               TextColor="White"
+                               BackgroundColor="#15263A" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Program" TextColor="#B0C4DE" FontSize="12" />
+                        <Entry x:Name="txtProgram"
+                               Placeholder="e.g. BS Computer Science"
+                               PlaceholderColor="#6E859E"
+                               TextColor="White"
+                               BackgroundColor="#15263A" />
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" Margin="0,8,0,0">
+                        <Button x:Name="btnAddStudent"
+                                Grid.Column="0"
+                                Text="Add Student"
+                                Clicked="OnAddStudentClicked"
+                                BackgroundColor="#FFA500"
+                                TextColor="#0D1B2A"
+                                FontAttributes="Bold"
+                                FontSize="12"
+                                CornerRadius="10"
+                                HeightRequest="42" />
+
+                        <Button x:Name="btnUpdateStudent"
+                                Grid.Column="1"
+                                Text="Update"
+                                Clicked="OnUpdateStudentClicked"
+                                BackgroundColor="#1E3F66"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                FontSize="12"
+                                CornerRadius="10"
+                                HeightRequest="42" />
+
+                        <Button x:Name="btnDeleteStudent"
+                                Grid.Column="2"
+                                Text="Delete"
+                                Clicked="OnDeleteStudentClicked"
+                                BackgroundColor="#3A151B"
+                                TextColor="#FF6B6B"
+                                BorderColor="#FF6B6B"
+                                BorderWidth="1"
+                                FontAttributes="Bold"
+                                FontSize="12"
+                                CornerRadius="10"
+                                HeightRequest="42" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

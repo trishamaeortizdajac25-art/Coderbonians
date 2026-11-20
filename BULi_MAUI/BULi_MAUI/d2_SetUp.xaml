@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BULi_MAUI.d2_SetUp"
+             BackgroundColor="#0D1B2A"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <Style x:Key="FieldLabel" TargetType="Label">
+            <Setter Property="TextColor" Value="#8FA3B8" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CharacterSpacing" Value="0.5" />
+        </Style>
+
+        <Style x:Key="FieldBorder" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="#15263A" />
+            <Setter Property="Stroke" Value="#22364D" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="HeightRequest" Value="52" />
+        </Style>
+
+        <Style x:Key="ErrorLabel" TargetType="Label">
+            <Setter Property="TextColor" Value="#FF6B6B" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="24,16,24,24">
+
+        <!-- TOP BAR: step label + Skip -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <Label x:Name="StepLabel"
+                   Text="STEP 1 OF 3"
+                   TextColor="#8FA3B8"
+                   FontSize="12"
+                   CharacterSpacing="1.5"
+                   VerticalOptions="Center" />
+            <Label Grid.Column="1"
+                   Text="Skip"
+                   TextColor="#B0C4DE"
+                   FontSize="15"
+                   Padding="8">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSkipTapped" />
+                </Label.GestureRecognizers>
+            </Label>
+        </Grid>
+
+        <!-- PROGRESS BAR -->
+        <ProgressBar x:Name="Progress"
+                     Grid.Row="1"
+                     Progress="0.33"
+                     ProgressColor="#FFA500"
+                     Margin="0,8,0,24" />
+
+        <!-- STEPS -->
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Spacing="20">
+
+                <VerticalStackLayout Spacing="4">
+                    <Label x:Name="TitleLabel" Text="Personal details"
+                           TextColor="White" FontSize="26" FontAttributes="Bold" />
+                    <Label x:Name="SubtitleLabel" Text="Tell us a bit about yourself."
+                           TextColor="#8FA3B8" FontSize="14" />
+                </VerticalStackLayout>
+
+                <!-- STEP 1: PERSONAL -->
+                <VerticalStackLayout x:Name="Step1" Spacing="18">
+
+                    <Grid HeightRequest="104" WidthRequest="104" HorizontalOptions="Center" Margin="0,4,0,8">
+                        <Border StrokeShape="RoundRectangle 52"
+                                BackgroundColor="#15263A"
+                                Stroke="#22364D"
+                                StrokeThickness="1">
+                            <Grid>
+                                <Label Text="+" TextColor="#8FA3B8" FontSize="28"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                                <Image x:Name="ProfileImage" Aspect="AspectFill" />
+                            </Grid>
+                        </Border>
+                        <Border StrokeShape="RoundRectangle 15"
+                                BackgroundColor="#FFA500"
+                                StrokeThickness="0"
+                                WidthRequest="30" HeightRequest="30"
+                                HorizontalOptions="End" VerticalOptions="End">
+                            <Label Text="✎" TextColor="#0D1B2A" FontSize="14"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPhotoTapped" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="FULL NAME" Style="{StaticResource FieldLabel}" />
+                        <Border Style="{StaticResource FieldBorder}">
+                            <Entry x:Name="NameEntry" Placeholder="Juan Dela Cruz"
+                                   TextColor="White" PlaceholderColor="#4F657B"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="BIRTH DATE" Style="{StaticResource FieldLabel}" />
+                        <Border Style="{StaticResource FieldBorder}">
+                            <DatePicker x:Name="BirthDatePicker"
+                                        TextColor="White"
+                                        BackgroundColor="Transparent"
+                                        DateSelected="OnBirthDateSelected" />
+                        </Border>
+                        <Label x:Name="AgeLabel" Text="" TextColor="#8FA3B8" FontSize="12" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="GENDER" Style="{StaticResource FieldLabel}" />
+                        <Border Style="{StaticResource FieldBorder}">
+                            <Picker x:Name="GenderPicker" Title="Select"
+                                    TextColor="White" TitleColor="#4F657B"
+                                    BackgroundColor="Transparent">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>Male</x:String>
+                                        <x:String>Female</x:String>
+                                        <x:String>Prefer not to say</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- STEP 2: ACADEMIC -->
+                <VerticalStackLayout x:Name="Step2" Spacing="18" IsVisible="False">
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="STUDENT ID" Style="{StaticResource FieldLabel}" />
+                        <Border x:Name="StudentIdBorder" Style="{StaticResource FieldBorder}">
+                            <Entry x:Name="StudentIdEntry"
+                                   Placeholder="2026-0001"
+                                   Keyboard="Numeric"
+                                   TextColor="White"
+                                   PlaceholderColor="#4F657B"
+                                   BackgroundColor="Transparent"
+                                   TextChanged="OnStudentIdTextChanged" />
+                        </Border>
+                        <Label x:Name="StudentIdErrorLabel" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="PROGRAM" Style="{StaticResource FieldLabel}" />
+                        <Border Style="{StaticResource FieldBorder}">
+                            <Entry x:Name="ProgramEntry" Placeholder="BS Information Technology"
+                                   TextColor="White" PlaceholderColor="#4F657B"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="YEAR LEVEL" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBorder}">
+                                <Picker x:Name="YearPicker" Title="Select"
+                                        TextColor="White" TitleColor="#4F657B"
+                                        BackgroundColor="Transparent">
+                                    <Picker.ItemsSource>
+                                        <x:Array Type="{x:Type x:String}">
+                                            <x:String>1st Year</x:String>
+                                            <x:String>2nd Year</x:String>
+                                            <x:String>3rd Year</x:String>
+                                            <x:String>4th Year</x:String>
+                                        </x:Array>
+                                    </Picker.ItemsSource>
+                                </Picker>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
+                            <Label Text="BLOC" Style="{StaticResource FieldLabel}" />
+                            <Border Style="{StaticResource FieldBorder}">
+                                <Entry x:Name="BlocEntry" Placeholder="A"
+                                       TextColor="White" PlaceholderColor="#4F657B"
+                                       BackgroundColor="Transparent" MaxLength="2" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- STEP 3: CONTACT -->
+                <VerticalStackLayout x:Name="Step3" Spacing="18" IsVisible="False">
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="CONTACT NUMBER" Style="{StaticResource FieldLabel}" />
+                        <Border x:Name="ContactBorder" Style="{StaticResource FieldBorder}">
+                            <Entry x:Name="ContactEntry"
+                                   Placeholder="09123456789"
+                                   Keyboard="Telephone"
+                                   MaxLength="13"
+                                   TextColor="White"
+                                   PlaceholderColor="#4F657B"
+                                   BackgroundColor="Transparent"
+                                   TextChanged="OnContactTextChanged" />
+                        </Border>
+                        <Label x:Name="ContactErrorLabel" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="EMAIL" Style="{StaticResource FieldLabel}" />
+                        <Border Style="{StaticResource FieldBorder}">
+                            <Entry x:Name="EmailEntry" Placeholder="name@example.com"
+                                   Keyboard="Email"
+                                   TextColor="White" PlaceholderColor="#4F657B"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- BOTTOM BUTTONS -->
+        <Grid Grid.Row="3" ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,16,0,0">
+            <Button x:Name="BackButton"
+                    Text="Back"
+                    Clicked="OnBackClicked"
+                    BackgroundColor="Transparent"
+                    TextColor="#B0C4DE"
+                    BorderColor="#22364D"
+                    BorderWidth="1"
+                    CornerRadius="12"
+                    HeightRequest="52"
+                    WidthRequest="96"
+                    IsVisible="False" />
+            <Button x:Name="NextButton"
+                    Grid.Column="1"
+                    Text="Continue"
+                    Clicked="OnNextClicked"
+                    BackgroundColor="#FFA500"
+                    TextColor="#0D1B2A"
+                    FontAttributes="Bold"
+                    CornerRadius="12"
+                    HeightRequest="52" />
+        </Grid>
+
+    </Grid>
+</ContentPage>
