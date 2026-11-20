@@ -169,10 +169,6 @@ INSERT INTO year_levels (year_level, sort_order) VALUES
     ('2nd Year', 2),
     ('3rd Year', 3),
     ('4th Year', 4);
-<<<<<<< HEAD
-    
-=======
->>>>>>> 7e71f4b296eaa9049a7fda6aaca5cdfade1c6cd7
 
 -- The ONLY five programs in the system: BSIT, BSCS, BSMet, BSBio, BSChem.
 -- Every program used by a student below MUST be listed here (foreign key).
@@ -201,16 +197,11 @@ VALUES
     ('2025-0012', 'Bianca',  NULL,      'Torres',     'Female', '2006-10-16', '2nd Year',  'BS Computer Science',        'B', '09181234576', 'bianca.torres@example.com',   'Daraga, Albay',       'Active',    'bianca.torres',   SHA2('student123', 256)),
     ('2025-0013', 'Miguel',  'Tan',     'Aquino',     'Male',   '2006-12-02', '2nd Year',  'BS Computer Science',        'A', '09201234577', 'miguel.aquino@example.com',   'Legazpi City, Albay', 'Active',    'miguel.aquino',   SHA2('student123', 256)),
     ('2024-0021', 'Jose',    NULL,      'Reyes',      'Male',   '2005-11-05', '3rd Year',  'BS Information Technology',  'B', '09391234569', 'jose.reyes@example.com',      'Camalig, Albay',      'Active',    'jose.reyes',      SHA2('student123', 256)),
-<<<<<<< HEAD
-    ('2024-0022', 'Carlo',   NULL,      'Navarro',    'Male',   '2005-02-03', '3rd Year',  'BS Meteorology',               'A', '09911234575', 'carlo.navarro@example.com',   'Oas, Albay',          'Dropped',   'carlo.navarro', SHA2('student123', 256)),
-=======
     ('2024-0022', 'Carlo',   NULL,      'Navarro',    'Male',   '2005-02-03', '3rd Year',  'BS Meteorology',               'A', '09911234575', 'carlo.navarro@example.com',   'Oas, Albay',          'Dropped',   'carlo.navarro',   SHA2('student123', 256)),
->>>>>>> 7e71f4b296eaa9049a7fda6aaca5cdfade1c6cd7
     ('2023-0031', 'Mark',    'Dy',      'Villanueva', 'Male',   '2004-09-18', '4th Year',  'BS Chemistry',               'A', '09561234571', 'mark.villanueva@example.com', 'Ligao City, Albay',   'On Leave',  'mark.villanueva', SHA2('student123', 256)),
     ('2023-0032', 'Paolo',   NULL,      'Bautista',   'Male',   '2004-12-27', '4th Year',  'BS Computer Science',        'B', '09781234573', 'paolo.bautista@example.com',  'Legazpi City, Albay', 'Graduated', 'paolo.bautista',  SHA2('student123', 256)),
-    ('2023-0033', 'Hannah',  'Reyes',   'Castillo',   'Female', '2004-04-21', '4th Year',  'BS Biology',                 'A', '09151234578', 'hannah.castillo@example.com', 'Daraga, Albay',       'Active',    'hannah.castillo', SHA2('student123', 256)),
-    ('2026-0099', 'Test',    NULL,      'Student',    'Male',   '2008-06-15', '1st Year',  'BS Information Technology',  'A', '09123456789', 'test.student@example.com',    'Naga City, Camarines Sur', 'Active', 'test.student',  SHA2('test123', 256));
-
+    ('2023-0033', 'Hannah',  'Reyes',   'Castillo',   'Female', '2004-04-21', '4th Year',  'BS Biology',                 'A', '09151234578', 'hannah.castillo@example.com', 'Daraga, Albay',       'Active',    'hannah.castillo', SHA2('student123', 256));
+   
 INSERT INTO activity_logs (actor_type, actor_id, action, target_student_id, details) VALUES
     ('Teacher', 1, 'LOGIN',    NULL, 'Teacher Jonathan Pelon signed in'),
     ('Student', 1, 'REGISTER', 1,    'Student 2026-0001 registered'),
@@ -227,7 +218,7 @@ ORDER BY sort_order;
 
 -- Each should return exactly 1 row if the test logins work:
 SELECT username FROM teachers WHERE username = 'jonpel'       AND password_hash = SHA2('pass1', 256);
-SELECT username FROM students WHERE username = 'test.student' AND password_hash = SHA2('test123', 256);
+SELECT username FROM students WHERE username = 'juan.delacruz' AND password_hash = SHA2('student123', 256);
 
 USE sis_db;
 
