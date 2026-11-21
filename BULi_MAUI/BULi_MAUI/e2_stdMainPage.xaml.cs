@@ -1,9 +1,12 @@
+using MySqlConnector;
+
 namespace BULi_MAUI;
 
 public partial class e2_stdMainPage : ContentPage
 {
     private bool _isEditing;
-    private string _actualPassword = "••••••••";
+    private string _actualPassword = string.Empty;
+    private string _dbUsername = string.Empty;
     private bool _isPasswordVisible;
 
     public e2_stdMainPage()
@@ -11,7 +14,6 @@ public partial class e2_stdMainPage : ContentPage
         InitializeComponent();
         dpBirthDate.MaximumDate = DateTime.Today;
 
-        // Attach strict input filters in code-behind (zero XAML changes)
         txtAge.TextChanged += OnAgeTextChanged;
         txtName.TextChanged += OnLettersOnlyTextChanged;
         txtProgram.TextChanged += OnLettersOnlyTextChanged;
@@ -49,6 +51,34 @@ public partial class e2_stdMainPage : ContentPage
             return string.Empty;
 
         return new string(input.Where(c => char.IsLetter(c) || char.IsWhiteSpace(c)).ToArray());
+    }
+
+    private async Task LoadStudentUsernameFromDbAsync(string idOrNumber)
+    {
+        try
+        {
+            await using var conn = new MySqlConnection(SisReadService.ConnectionString);
+            await conn.OpenAsync();
+
+            const string sql = @"
+                SELECT username
+                FROM students
+                WHERE (student_id = @id OR student_number = @snum) AND is_deleted = 0
+                LIMIT 1;";
+
+            await using var cmd = new MySqlCommand(sql, conn);
+            uint.TryParse(idOrNumber, out uint parsedId);
+            cmd.Parameters.AddWithValue("@id", parsedId);
+            cmd.Parameters.AddWithValue("@snum", idOrNumber);
+
+            object? result = await cmd.ExecuteScalarAsync();
+            if (result is string uname && !string.IsNullOrWhiteSpace(uname))
+                _dbUsername = uname;
+        }
+        catch
+        {
+            // Fallback handled in RefreshProfileVisuals
+        }
     }
 
     private async Task LoadStudentInfoAsync()
@@ -91,6 +121,8 @@ public partial class e2_stdMainPage : ContentPage
             pckGender.SelectedItem = gender;
             txtContact.Text = contact;
             txtEmail.Text = email;
+
+            await LoadStudentUsernameFromDbAsync(studentId);
         }
         catch (Exception ex)
         {
@@ -127,7 +159,6 @@ public partial class e2_stdMainPage : ContentPage
 
         if (editing)
         {
-            // Unlock Age field in edit mode
             txtAge.IsReadOnly = false;
             txtAge.TextColor = Colors.White;
             txtContact.MaxLength = 11;
@@ -152,7 +183,6 @@ public partial class e2_stdMainPage : ContentPage
         if (sender is not Entry entry)
             return;
 
-        // 2 digits only, no characters
         string filtered = KeepDigitsOnly(e.NewTextValue, 2);
         if (entry.Text != filtered)
             entry.Text = filtered;
@@ -163,7 +193,6 @@ public partial class e2_stdMainPage : ContentPage
         if (sender is not Entry entry)
             return;
 
-        // 11 digits max, no characters
         string filtered = KeepDigitsOnly(e.NewTextValue, 11);
         if (entry.Text != filtered)
             entry.Text = filtered;
@@ -174,7 +203,6 @@ public partial class e2_stdMainPage : ContentPage
         if (sender is not Entry entry)
             return;
 
-        // Characters/letters only, no numbers
         string filtered = KeepLettersOnly(e.NewTextValue);
         if (entry.Text != filtered)
             entry.Text = filtered;
@@ -224,13 +252,15 @@ public partial class e2_stdMainPage : ContentPage
             lblModalInitials.IsVisible = true;
         }
 
-        lblProfileUsername.Text = !string.IsNullOrWhiteSpace(SessionService.UserId)
-            ? SessionService.UserId
-            : "student";
+        lblProfileUsername.Text = !string.IsNullOrWhiteSpace(_dbUsername)
+            ? _dbUsername
+            : (!string.IsNullOrWhiteSpace(SessionService.Email) ? SessionService.Email : SessionService.UserId);
 
         _isPasswordVisible = false;
         btnTogglePasswordVisibility.Text = "Show";
-        lblProfilePassword.Text = new string('•', Math.Max(8, _actualPassword.Length));
+        lblProfilePassword.Text = !string.IsNullOrEmpty(_actualPassword)
+            ? new string('•', Math.Max(8, _actualPassword.Length))
+            : "•••••••• (SHA-256 Protected)";
     }
 
     // --- EDIT / SAVE & DELETE BUTTONS ---
@@ -273,7 +303,6 @@ public partial class e2_stdMainPage : ContentPage
             return;
         }
 
-        // Keep BirthDate consistent with edited Age if user typed a new age directly
         DateTime birthDate = dpBirthDate.Date ?? new DateTime(2008, 6, 15);
         if (CalculateAge(birthDate) != editedAge)
         {
@@ -321,7 +350,6 @@ public partial class e2_stdMainPage : ContentPage
                 return;
             }
 
-            // Update SessionService so the UI reflects the new Student ID and Age immediately
             SessionService.UserId = cleanId;
             SessionService.FullName = fullName;
             SessionService.Program = program;
@@ -406,6 +434,7 @@ public partial class e2_stdMainPage : ContentPage
     private async void OnViewProfileClicked(object? sender, EventArgs e)
     {
         await CloseProfileDrawerAsync();
+        await LoadStudentUsernameFromDbAsync(KeepDigitsOnly(SessionService.UserId));
         RefreshProfileVisuals();
         ViewProfileOverlay.IsVisible = true;
     }
@@ -466,6 +495,12 @@ public partial class e2_stdMainPage : ContentPage
 
     private void OnTogglePasswordVisibilityClicked(object? sender, EventArgs e)
     {
+        if (string.IsNullOrEmpty(_actualPassword))
+        {
+            DisplayAlertAsync("Encrypted Password", "Passwords are stored using SHA-256 encryption. Use 'Change Password' in the menu to set a new one.", "OK");
+            return;
+        }
+
         _isPasswordVisible = !_isPasswordVisible;
         btnTogglePasswordVisibility.Text = _isPasswordVisible ? "Hide" : "Show";
         lblProfilePassword.Text = _isPasswordVisible
@@ -476,7 +511,45 @@ public partial class e2_stdMainPage : ContentPage
     private async void OnChangePasswordClicked(object? sender, EventArgs e)
     {
         await CloseProfileDrawerAsync();
-        await DisplayAlertAsync("Change Password", "Change password hook ready.", "OK");
+
+        string? oldPassword = await DisplayPromptAsync(
+            "Change Password",
+            "Enter your current password:",
+            accept: "Next",
+            cancel: "Cancel",
+            placeholder: "Current password");
+
+        if (string.IsNullOrWhiteSpace(oldPassword))
+            return;
+
+        string? newPassword = await DisplayPromptAsync(
+            "Change Password",
+            "Enter your new password:",
+            accept: "Save",
+            cancel: "Cancel",
+            placeholder: "New password");
+
+        if (string.IsNullOrWhiteSpace(newPassword))
+            return;
+
+        try
+        {
+            string cleanId = KeepDigitsOnly(SessionService.UserId);
+            uint.TryParse(cleanId, out uint dbStudentId);
+
+            var result = await SisWriteService.ChangeStudentPasswordAsync(dbStudentId, cleanId, oldPassword, newPassword);
+            if (result.Success)
+            {
+                _actualPassword = newPassword;
+                RefreshProfileVisuals();
+            }
+
+            await DisplayAlertAsync(result.Success ? "Success" : "Failed", result.Message, "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Database Error", ex.Message, "OK");
+        }
     }
 
     private void OnToggleThemeClicked(object? sender, EventArgs e)

@@ -185,6 +185,31 @@ public static class SisWriteService
 
         return await cmd.ExecuteNonQueryAsync() > 0;
     }
+    // 8. STUDENT CHANGE PASSWORD (e2_stdMainPage)
+    public static async Task<(bool Success, string Message)> ChangeStudentPasswordAsync(
+        uint studentId, string? studentNumber, string oldPassword, string newPassword)
+    {
+        await using var conn = new MySqlConnection(ConnStr);
+        await conn.OpenAsync();
+
+        const string sql = @"
+            UPDATE students
+            SET password_hash = @newHash
+            WHERE (student_id = @id OR (@snum IS NOT NULL AND student_number = @snum))
+              AND password_hash = @oldHash
+              AND is_deleted = 0;";
+
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@newHash", HashPassword(newPassword));
+        cmd.Parameters.AddWithValue("@oldHash", HashPassword(oldPassword));
+        cmd.Parameters.AddWithValue("@id", studentId);
+        cmd.Parameters.AddWithValue("@snum", string.IsNullOrWhiteSpace(studentNumber) ? DBNull.Value : studentNumber);
+
+        int rows = await cmd.ExecuteNonQueryAsync();
+        return rows > 0
+            ? (true, "Password updated successfully!")
+            : (false, "Current password is incorrect.");
+    }
 
     // 7. TEACHER INSERT RECORD (d1_Records)
     public static async Task<bool> AddStudentRecordAsync(StudentRecord s, string username, string password)
