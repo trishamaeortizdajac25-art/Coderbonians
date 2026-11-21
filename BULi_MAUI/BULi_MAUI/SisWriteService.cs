@@ -25,8 +25,10 @@ public static class SisWriteService
             await conn.OpenAsync();
 
             const string sql = @"
-                INSERT INTO students (first_name, last_name, username, password_hash)
-                VALUES ('New', 'Student', @user, @hash);
+                INSERT INTO students
+                    (first_name, last_name, username, password_hash, status, is_deleted)
+                VALUES
+                    ('', '', @user, @hash, 'Active', 0);
                 SELECT LAST_INSERT_ID();";
 
             await using var cmd = new MySqlCommand(sql, conn);

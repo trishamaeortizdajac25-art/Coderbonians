@@ -4,7 +4,7 @@ public partial class d2_SetUp : ContentPage
 {
     private int _step = 1;
     private const int TotalSteps = 3;
-    private const int MaxContactLength = 13;
+    private const int MaxContactLength = 11;
     private string _selectedPhotoPath = string.Empty;
     private bool _isFilteringInput;
 
@@ -24,14 +24,16 @@ public partial class d2_SetUp : ContentPage
         if (SessionService.IsLoggedIn && SessionService.Role == "Student")
         {
             NameEntry.Text = SessionService.FullName;
-            StudentIdEntry.Text = SessionService.UserId;
+            // Only pre-fill StudentIdEntry if it isn't the internal auto-increment DB id
+            string cachedDbId = Preferences.Default.Get("StudentSessionDbId", string.Empty);
+            StudentIdEntry.Text = SessionService.UserId == cachedDbId ? string.Empty : SessionService.UserId;
             ProgramEntry.Text = SessionService.Program;
-            YearPicker.SelectedItem = SessionService.YearLevel;
+            YearPicker.SelectedItem = string.IsNullOrWhiteSpace(SessionService.YearLevel) ? null : SessionService.YearLevel;
             BlocEntry.Text = SessionService.Bloc;
-            GenderPicker.SelectedItem = SessionService.Gender;
+            GenderPicker.SelectedItem = string.IsNullOrWhiteSpace(SessionService.Gender) ? null : SessionService.Gender;
             ContactEntry.Text = SessionService.Contact;
             EmailEntry.Text = SessionService.Email;
-            BirthDatePicker.Date = SessionService.BirthDate;
+            BirthDatePicker.Date = SessionService.BirthDate ?? DateTime.Today.AddYears(-18);
 
             if (!string.IsNullOrWhiteSpace(SessionService.PhotoPath) && File.Exists(SessionService.PhotoPath))
             {
@@ -55,8 +57,7 @@ public partial class d2_SetUp : ContentPage
             return;
 
         string input = e.NewTextValue ?? string.Empty;
-        // Allow only digits (0-9) and hyphen (-)
-        string filtered = new string(input.Where(c => char.IsDigit(c) || c == '-').ToArray());
+        string filtered = new string(input.Where(char.IsDigit).ToArray());
 
         if (filtered != input)
         {
@@ -65,7 +66,7 @@ public partial class d2_SetUp : ContentPage
             StudentIdEntry.CursorPosition = filtered.Length;
             _isFilteringInput = false;
 
-            ShowFieldError(StudentIdBorder, StudentIdErrorLabel, "Letters are not allowed. Use numbers and '-' only.");
+            ShowFieldError(StudentIdBorder, StudentIdErrorLabel, "Numbers only (0-9).");
         }
         else
         {
@@ -79,28 +80,10 @@ public partial class d2_SetUp : ContentPage
             return;
 
         string input = e.NewTextValue ?? string.Empty;
-        bool hadInvalidChars = false;
-        bool exceededLength = false;
-
-        // Allow digits (0-9) and a leading '+' only
-        var chars = new List<char>(MaxContactLength);
-        for (int i = 0; i < input.Length; i++)
-        {
-            char c = input[i];
-            if (char.IsDigit(c) || (c == '+' && i == 0 && chars.Count == 0))
-            {
-                if (chars.Count < MaxContactLength)
-                    chars.Add(c);
-                else
-                    exceededLength = true;
-            }
-            else
-            {
-                hadInvalidChars = true;
-            }
-        }
-
-        string filtered = new string(chars.ToArray());
+        bool hadInvalidChars = input.Any(c => !char.IsDigit(c));
+        string digits = new string(input.Where(char.IsDigit).ToArray());
+        bool exceededLength = digits.Length > MaxContactLength;
+        string filtered = exceededLength ? digits[..MaxContactLength] : digits;
 
         if (filtered != input)
         {
@@ -114,9 +97,9 @@ public partial class d2_SetUp : ContentPage
         {
             ShowFieldError(ContactBorder, ContactErrorLabel, "Letters and symbols are not allowed. Numbers only.");
         }
-        else if (exceededLength || filtered.Length == MaxContactLength)
+        else if (exceededLength)
         {
-            ShowFieldError(ContactBorder, ContactErrorLabel, "Maximum of 13 digits reached.");
+            ShowFieldError(ContactBorder, ContactErrorLabel, "Maximum of 11 digits only.");
         }
         else
         {
@@ -182,9 +165,18 @@ public partial class d2_SetUp : ContentPage
 
     private async void OnSkipTapped(object? sender, TappedEventArgs e)
     {
-        SessionService.LoginAsStudent(
-            string.IsNullOrWhiteSpace(StudentIdEntry.Text) ? "2026-0001" : StudentIdEntry.Text.Trim(),
-            string.IsNullOrWhiteSpace(NameEntry.Text) ? "Student User" : NameEntry.Text.Trim());
+        // Keep everything empty so e2_stdMainPage displays "Not yet updated"
+        string cleanId = new string((StudentIdEntry.Text ?? string.Empty).Where(char.IsDigit).ToArray());
+        string fullName = NameEntry.Text?.Trim() ?? string.Empty;
+
+        SessionService.LoginAsStudent(cleanId, fullName);
+        SessionService.Program = string.Empty;
+        SessionService.YearLevel = string.Empty;
+        SessionService.Bloc = string.Empty;
+        SessionService.Gender = string.Empty;
+        SessionService.Contact = string.Empty;
+        SessionService.Email = string.Empty;
+        SessionService.BirthDate = null;
 
         await Shell.Current.GoToAsync("//StudentMain");
     }
@@ -200,7 +192,7 @@ public partial class d2_SetUp : ContentPage
         if (_step == 2)
         {
             string id = StudentIdEntry.Text?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(id) || !id.Any(char.IsDigit))
+            if (string.IsNullOrWhiteSpace(id) || !id.All(char.IsDigit))
             {
                 ShowFieldError(StudentIdBorder, StudentIdErrorLabel, "Please enter a valid numeric Student ID.");
                 return false;
@@ -210,9 +202,9 @@ public partial class d2_SetUp : ContentPage
         if (_step == 3)
         {
             string contact = ContactEntry.Text?.Trim() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(contact) && (contact.Length < 11 || contact.Length > MaxContactLength))
+            if (!string.IsNullOrWhiteSpace(contact) && contact.Length != 11)
             {
-                ShowFieldError(ContactBorder, ContactErrorLabel, "Contact number must be 11 to 13 digits.");
+                ShowFieldError(ContactBorder, ContactErrorLabel, "Contact number must be 11 digits.");
                 return false;
             }
 
@@ -228,23 +220,28 @@ public partial class d2_SetUp : ContentPage
 
     private async Task SaveProfile()
     {
-        string fullName = NameEntry.Text.Trim();
-        string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        string firstName = nameParts.Length > 0 ? nameParts[0] : "Student";
-        string lastName = nameParts.Length > 1 ? nameParts[^1] : "User";
-        string? middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
-
-        string studentNumber = StudentIdEntry.Text.Trim();
-        string program = string.IsNullOrWhiteSpace(ProgramEntry.Text) ? "BS Computer Science" : ProgramEntry.Text.Trim();
-        string yearLevel = YearPicker.SelectedItem?.ToString() ?? "1st Year";
-        string bloc = string.IsNullOrWhiteSpace(BlocEntry.Text) ? "A" : BlocEntry.Text.Trim().ToUpperInvariant();
-        DateTime birthDate = BirthDatePicker.Date ?? DateTime.Today.AddYears(-18);
-        string gender = GenderPicker.SelectedItem?.ToString() ?? "Prefer not to say";
-        string contact = ContactEntry.Text?.Trim() ?? string.Empty;
-        string email = EmailEntry.Text?.Trim() ?? string.Empty;
-
-        if (uint.TryParse(SessionService.UserId, out uint dbStudentId) && dbStudentId > 0)
+        NextButton.IsEnabled = false;
+        try
         {
+            string fullName = NameEntry.Text?.Trim() ?? string.Empty;
+            string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            string firstName = nameParts.Length > 0 ? nameParts[0] : "Student";
+            string lastName = nameParts.Length > 1 ? nameParts[^1] : "User";
+            string? middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
+
+            string studentNumber = new string((StudentIdEntry.Text ?? string.Empty).Where(char.IsDigit).ToArray());
+            string program = ProgramEntry.Text?.Trim() ?? string.Empty;
+            string yearLevel = YearPicker.SelectedItem?.ToString() ?? string.Empty;
+            string bloc = BlocEntry.Text?.Trim().ToUpperInvariant() ?? string.Empty;
+            DateTime? birthDate = BirthDatePicker.Date;
+            string gender = GenderPicker.SelectedItem?.ToString() ?? string.Empty;
+            string contact = ContactEntry.Text?.Trim() ?? string.Empty;
+            string email = EmailEntry.Text?.Trim() ?? string.Empty;
+            string address = AddressEntry.Text?.Trim() ?? string.Empty;
+
+            string dbIdRaw = Preferences.Default.Get("StudentSessionDbId", SessionService.UserId);
+            uint.TryParse(dbIdRaw, out uint dbStudentId);
+
             var record = new StudentRecord
             {
                 StudentId = dbStudentId,
@@ -258,26 +255,41 @@ public partial class d2_SetUp : ContentPage
                 Program = program,
                 Block = bloc,
                 ContactNumber = contact,
-                Email = email
+                Email = email,
+                Address = address
             };
 
-            await SisWriteService.UpdateStudentProfileAsync(record);
+            bool updated = await SisWriteService.UpdateStudentProfileAsync(record, dbIdRaw);
+            if (!updated)
+            {
+                await DisplayAlertAsync("Save Error", "Could not save profile to the database. Please try again.", "OK");
+                return;
+            }
+
+            // Set SessionService.UserId to the StudentNumber so e2_stdMainPage displays and updates cleanly
+            SessionService.LoginAsStudent(studentNumber, fullName);
+            SessionService.Program = program;
+            SessionService.YearLevel = yearLevel;
+            SessionService.Bloc = bloc;
+            SessionService.BirthDate = birthDate;
+            SessionService.Gender = gender;
+            SessionService.Contact = contact;
+            SessionService.Email = email;
+
+            if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
+                SessionService.PhotoPath = _selectedPhotoPath;
+
+            await DisplayAlertAsync("Success", "Student profile saved!", "OK");
+            await Shell.Current.GoToAsync("//StudentMain");
         }
-
-        SessionService.LoginAsStudent(SessionService.UserId, fullName);
-        SessionService.Program = program;
-        SessionService.YearLevel = yearLevel;
-        SessionService.Bloc = bloc;
-        SessionService.BirthDate = birthDate;
-        SessionService.Gender = gender;
-        SessionService.Contact = contact;
-        SessionService.Email = email;
-
-        if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
-            SessionService.PhotoPath = _selectedPhotoPath;
-
-        await DisplayAlertAsync("Success", "Student profile saved!", "OK");
-        await Shell.Current.GoToAsync("//StudentMain");
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Save Error", ex.Message, "OK");
+        }
+        finally
+        {
+            NextButton.IsEnabled = true;
+        }
     }
 
     private void OnBirthDateSelected(object? sender, DateChangedEventArgs e) => UpdateAge(e.NewDate);

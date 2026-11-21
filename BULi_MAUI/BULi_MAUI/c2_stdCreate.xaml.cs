@@ -7,11 +7,6 @@ public partial class c2_stdCreate : ContentPage
         InitializeComponent();
     }
 
-    private async void OnSignInTapped(object? sender, TappedEventArgs e)
-    {
-        await Shell.Current.GoToAsync("..");
-    }
-
     private async void OnSignUpClicked(object? sender, EventArgs e)
     {
         string username = txtUsername.Text?.Trim() ?? string.Empty;
@@ -19,7 +14,7 @@ public partial class c2_stdCreate : ContentPage
 
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            await DisplayAlertAsync("Missing Fields", "Please enter both a username and a password.", "OK");
+            await DisplayAlertAsync("Missing Fields", "Please enter a username and password.", "OK");
             return;
         }
 
@@ -33,18 +28,34 @@ public partial class c2_stdCreate : ContentPage
                 return;
             }
 
-            // Save the new database student_id into SessionService so d2_SetUp can update this row
-            SessionService.Logout();
-            SessionService.LoginAsStudent(result.StudentId.ToString(), "");
+            // Store the new DB student_id temporarily so d2_SetUp knows which row to update
+            SessionService.LoginAsStudent(result.StudentId.ToString(), string.Empty);
+            SessionService.Program = string.Empty;
+            SessionService.YearLevel = string.Empty;
+            SessionService.Bloc = string.Empty;
+            SessionService.Gender = string.Empty;
+            SessionService.Contact = string.Empty;
+            SessionService.Email = string.Empty;
+            SessionService.BirthDate = null;
+
+            Preferences.Default.Set("StudentSessionDbId", result.StudentId.ToString());
+            Preferences.Default.Set("StudentSessionUsername", username);
+            Preferences.Default.Set("StudentSessionPassword", password);
+
             await Shell.Current.GoToAsync(nameof(d2_SetUp));
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Connection Error", ex.Message, "OK");
+            await DisplayAlertAsync("Sign-Up Error", ex.Message, "OK");
         }
         finally
         {
             btnSignUp.IsEnabled = true;
         }
+    }
+
+    private async void OnSignInTapped(object? sender, TappedEventArgs e)
+    {
+        await Shell.Current.GoToAsync("..");
     }
 }

@@ -125,7 +125,6 @@
                                     <x:Array Type="{x:Type x:String}">
                                         <x:String>Male</x:String>
                                         <x:String>Female</x:String>
-                                        <x:String>Prefer not to say</x:String>
                                     </x:Array>
                                 </Picker.ItemsSource>
                             </Picker>
@@ -140,7 +139,7 @@
                         <Label Text="STUDENT ID" Style="{StaticResource FieldLabel}" />
                         <Border x:Name="StudentIdBorder" Style="{StaticResource FieldBorder}">
                             <Entry x:Name="StudentIdEntry"
-                                   Placeholder="2026-0001"
+                                   Placeholder="20260001"
                                    Keyboard="Numeric"
                                    TextColor="White"
                                    PlaceholderColor="#4F657B"
@@ -197,8 +196,8 @@
                         <Border x:Name="ContactBorder" Style="{StaticResource FieldBorder}">
                             <Entry x:Name="ContactEntry"
                                    Placeholder="09123456789"
-                                   Keyboard="Telephone"
-                                   MaxLength="13"
+                                   Keyboard="Numeric"
+                                   MaxLength="11"
                                    TextColor="White"
                                    PlaceholderColor="#4F657B"
                                    BackgroundColor="Transparent"
@@ -212,6 +211,15 @@
                         <Border Style="{StaticResource FieldBorder}">
                             <Entry x:Name="EmailEntry" Placeholder="name@example.com"
                                    Keyboard="Email"
+                                   TextColor="White" PlaceholderColor="#4F657B"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="ADDRESS" Style="{StaticResource FieldLabel}" />
+                        <Border Style="{StaticResource FieldBorder}">
+                            <Entry x:Name="AddressEntry" Placeholder="Enter home address"
                                    TextColor="White" PlaceholderColor="#4F657B"
                                    BackgroundColor="Transparent" />
                         </Border>
