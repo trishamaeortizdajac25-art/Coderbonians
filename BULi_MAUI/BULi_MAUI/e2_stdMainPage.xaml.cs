@@ -7,6 +7,7 @@ public partial class e2_stdMainPage : ContentPage
     private bool _isEditing;
     private string _actualPassword = string.Empty;
     private string _dbUsername = string.Empty;
+    private string _dbAddress = string.Empty;
     private bool _isPasswordVisible;
 
     public e2_stdMainPage()
@@ -53,7 +54,7 @@ public partial class e2_stdMainPage : ContentPage
         return new string(input.Where(c => char.IsLetter(c) || char.IsWhiteSpace(c)).ToArray());
     }
 
-    private async Task LoadStudentUsernameFromDbAsync(string idOrNumber)
+    private async Task LoadStudentExtraFromDbAsync(string idOrNumber)
     {
         try
         {
@@ -61,9 +62,9 @@ public partial class e2_stdMainPage : ContentPage
             await conn.OpenAsync();
 
             const string sql = @"
-                SELECT username
+                SELECT username, address
                 FROM students
-                WHERE (student_id = @id OR student_number = @snum) AND is_deleted = 0
+                WHERE (student_id = @id OR student_number = @snum) AND COALESCE(is_deleted, 0) = 0
                 LIMIT 1;";
 
             await using var cmd = new MySqlCommand(sql, conn);
@@ -71,13 +72,18 @@ public partial class e2_stdMainPage : ContentPage
             cmd.Parameters.AddWithValue("@id", parsedId);
             cmd.Parameters.AddWithValue("@snum", idOrNumber);
 
-            object? result = await cmd.ExecuteScalarAsync();
-            if (result is string uname && !string.IsNullOrWhiteSpace(uname))
-                _dbUsername = uname;
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                if (!reader.IsDBNull(0))
+                    _dbUsername = reader.GetString(0);
+                if (!reader.IsDBNull(1))
+                    _dbAddress = reader.GetString(1);
+            }
         }
         catch
         {
-            // Fallback handled in RefreshProfileVisuals
+            // Fallback handled in UI
         }
     }
 
@@ -95,6 +101,9 @@ public partial class e2_stdMainPage : ContentPage
             string contact = KeepDigitsOnly(SessionService.Contact, 11);
             string gender = SessionService.Gender?.Trim() ?? string.Empty;
             string email = SessionService.Email?.Trim() ?? string.Empty;
+
+            await LoadStudentExtraFromDbAsync(studentId);
+            string address = _dbAddress.Trim();
 
             bool hasBirthDate = SessionService.BirthDate.HasValue;
             DateTime birthDate = SessionService.BirthDate ?? DateTime.Today;
@@ -115,6 +124,7 @@ public partial class e2_stdMainPage : ContentPage
             lblGender.Text = string.IsNullOrWhiteSpace(gender) ? placeholder : gender;
             lblContact.Text = string.IsNullOrWhiteSpace(contact) ? placeholder : contact;
             lblEmail.Text = string.IsNullOrWhiteSpace(email) ? placeholder : email;
+            lblAddress.Text = string.IsNullOrWhiteSpace(address) ? placeholder : address;
 
             // Edit fields remain clean/empty so the student can type immediately
             txtName.Text = fullName;
@@ -127,8 +137,7 @@ public partial class e2_stdMainPage : ContentPage
             pckGender.SelectedItem = string.IsNullOrWhiteSpace(gender) ? null : gender;
             txtContact.Text = contact;
             txtEmail.Text = email;
-
-            await LoadStudentUsernameFromDbAsync(studentId);
+            txtAddress.Text = address;
         }
         catch (Exception ex)
         {
@@ -151,6 +160,7 @@ public partial class e2_stdMainPage : ContentPage
         lblGender.IsVisible = !editing;
         lblContact.IsVisible = !editing;
         lblEmail.IsVisible = !editing;
+        lblAddress.IsVisible = !editing;
 
         txtName.IsVisible = editing;
         txtStudentId.IsVisible = editing;
@@ -162,6 +172,7 @@ public partial class e2_stdMainPage : ContentPage
         pckGender.IsVisible = editing;
         txtContact.IsVisible = editing;
         txtEmail.IsVisible = editing;
+        txtAddress.IsVisible = editing;
 
         if (editing)
         {
@@ -258,6 +269,12 @@ public partial class e2_stdMainPage : ContentPage
             lblModalInitials.IsVisible = true;
         }
 
+        if (string.IsNullOrWhiteSpace(_dbUsername))
+            _dbUsername = Preferences.Default.Get("StudentSessionUsername", string.Empty);
+
+        if (string.IsNullOrEmpty(_actualPassword))
+            _actualPassword = Preferences.Default.Get("StudentSessionPassword", string.Empty);
+
         lblProfileUsername.Text = !string.IsNullOrWhiteSpace(_dbUsername)
             ? _dbUsername
             : (!string.IsNullOrWhiteSpace(SessionService.Email) ? SessionService.Email : SessionService.UserId);
@@ -266,7 +283,7 @@ public partial class e2_stdMainPage : ContentPage
         btnTogglePasswordVisibility.Text = "Show";
         lblProfilePassword.Text = !string.IsNullOrEmpty(_actualPassword)
             ? new string('•', Math.Max(8, _actualPassword.Length))
-            : "•••••••• (SHA-256 Protected)";
+            : "••••••••";
     }
 
     // --- EDIT / SAVE & DELETE BUTTONS ---
@@ -297,24 +314,30 @@ public partial class e2_stdMainPage : ContentPage
             return;
         }
 
-        if (cleanContact.Length != 11)
+        if (!string.IsNullOrEmpty(cleanContact) && cleanContact.Length != 11)
         {
-            await DisplayAlertAsync("Validation", "Contact number must be exactly 11 digits.", "OK");
+            await DisplayAlertAsync("Validation", "Contact number must be 11 digits.", "OK");
             return;
         }
 
-        if (!int.TryParse(cleanAgeText, out int editedAge) || cleanAgeText.Length == 0)
+        DateTime? birthDate = null;
+        if (int.TryParse(cleanAgeText, out int editedAge) && editedAge > 0)
         {
-            await DisplayAlertAsync("Validation", "Age must be a 2-digit number.", "OK");
-            return;
+            DateTime baseDate = dpBirthDate.Date ?? DateTime.Today;
+            if (CalculateAge(baseDate) != editedAge)
+            {
+                int targetYear = DateTime.Today.Year - editedAge;
+                int day = Math.Min(baseDate.Day, DateTime.DaysInMonth(targetYear, baseDate.Month));
+                birthDate = new DateTime(targetYear, baseDate.Month, day);
+            }
+            else
+            {
+                birthDate = baseDate;
+            }
         }
-
-        DateTime birthDate = dpBirthDate.Date ?? new DateTime(2008, 6, 15);
-        if (CalculateAge(birthDate) != editedAge)
+        else if (SessionService.BirthDate.HasValue)
         {
-            int targetYear = DateTime.Today.Year - editedAge;
-            int day = Math.Min(birthDate.Day, DateTime.DaysInMonth(targetYear, birthDate.Month));
-            birthDate = new DateTime(targetYear, birthDate.Month, day);
+            birthDate = dpBirthDate.Date;
         }
 
         string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -324,8 +347,9 @@ public partial class e2_stdMainPage : ContentPage
 
         string bloc = txtBloc.Text?.Trim() ?? string.Empty;
         string yearLevel = txtYearLevel.Text?.Trim() ?? string.Empty;
-        string gender = pckGender.SelectedItem?.ToString() ?? "Male";
+        string gender = pckGender.SelectedItem?.ToString() ?? string.Empty;
         string email = txtEmail.Text?.Trim() ?? string.Empty;
+        string address = txtAddress.Text?.Trim() ?? string.Empty;
 
         btnEditOrSave.IsEnabled = false;
         try
@@ -346,7 +370,8 @@ public partial class e2_stdMainPage : ContentPage
                 Program = program,
                 Block = bloc,
                 ContactNumber = cleanContact,
-                Email = email
+                Email = email,
+                Address = address
             };
 
             bool updated = await SisWriteService.UpdateStudentProfileAsync(record, previousId);
@@ -365,6 +390,7 @@ public partial class e2_stdMainPage : ContentPage
             SessionService.Gender = gender;
             SessionService.Contact = cleanContact;
             SessionService.Email = email;
+            _dbAddress = address;
 
             SetEditMode(false);
             await LoadStudentInfoAsync();
@@ -440,7 +466,7 @@ public partial class e2_stdMainPage : ContentPage
     private async void OnViewProfileClicked(object? sender, EventArgs e)
     {
         await CloseProfileDrawerAsync();
-        await LoadStudentUsernameFromDbAsync(KeepDigitsOnly(SessionService.UserId));
+        await LoadStudentExtraFromDbAsync(KeepDigitsOnly(SessionService.UserId));
         RefreshProfileVisuals();
         ViewProfileOverlay.IsVisible = true;
     }
@@ -502,16 +528,21 @@ public partial class e2_stdMainPage : ContentPage
     private void OnTogglePasswordVisibilityClicked(object? sender, EventArgs e)
     {
         if (string.IsNullOrEmpty(_actualPassword))
-        {
-            DisplayAlertAsync("Encrypted Password", "Passwords are stored using SHA-256 encryption. Use 'Change Password' in the menu to set a new one.", "OK");
-            return;
-        }
+            _actualPassword = Preferences.Default.Get("StudentSessionPassword", string.Empty);
 
         _isPasswordVisible = !_isPasswordVisible;
         btnTogglePasswordVisibility.Text = _isPasswordVisible ? "Hide" : "Show";
-        lblProfilePassword.Text = _isPasswordVisible
-            ? _actualPassword
-            : new string('•', Math.Max(8, _actualPassword.Length));
+
+        if (_isPasswordVisible)
+        {
+            lblProfilePassword.Text = !string.IsNullOrEmpty(_actualPassword)
+                ? _actualPassword
+                : "(No cached password — re-login once)";
+        }
+        else
+        {
+            lblProfilePassword.Text = new string('•', Math.Max(8, _actualPassword.Length));
+        }
     }
 
     private async void OnChangePasswordClicked(object? sender, EventArgs e)
@@ -547,6 +578,7 @@ public partial class e2_stdMainPage : ContentPage
             if (result.Success)
             {
                 _actualPassword = newPassword;
+                Preferences.Default.Set("StudentSessionPassword", newPassword);
                 RefreshProfileVisuals();
             }
 
@@ -572,6 +604,7 @@ public partial class e2_stdMainPage : ContentPage
         if (!confirm)
             return;
 
+        Preferences.Default.Remove("StudentSessionPassword");
         SessionService.Logout();
         await Shell.Current.GoToAsync("//RolePage");
     }

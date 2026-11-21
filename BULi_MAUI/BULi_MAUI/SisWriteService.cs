@@ -138,39 +138,79 @@ public static class SisWriteService
 
     // 5. STUDENT SELF-EDIT (e2_stdMainPage & d2_SetUp)
     // 5. STUDENT SELF-EDIT (e2_stdMainPage & d2_SetUp)
-    public static async Task<bool> UpdateStudentProfileAsync(StudentRecord s, string? oldStudentNumber = null)
+    public static async Task<bool> UpdateStudentProfileAsync(StudentRecord record, string? previousStudentNumber = null)
     {
         await using var conn = new MySqlConnection(ConnStr);
         await conn.OpenAsync();
 
-        const string sql = @"
+        string prevRaw = previousStudentNumber?.Trim() ?? string.Empty;
+        string prevDigits = new string(prevRaw.Where(char.IsDigit).ToArray());
+        string cachedUsername = Preferences.Default.Get("StudentSessionUsername", string.Empty).Trim();
+
+        const string updateSql = @"
             UPDATE students
-            SET student_number = COALESCE(NULLIF(@snum, ''), student_number),
-                first_name = @fn, middle_name = @mn, last_name = @ln,
-                gender = @gender, birthdate = @bday, year_level = @yl,
-                program = @prog, block = @block, contact_number = @contact,
-                email = @email, address = @addr
-            WHERE student_id = @id
-               OR (@oldSnum IS NOT NULL AND student_number = @oldSnum)
-               OR (@email IS NOT NULL AND email = @email);";
+            SET student_number = @snum,
+                first_name = @fn,
+                middle_name = @mn,
+                last_name = @ln,
+                gender = @gender,
+                birthdate = @bday,
+                year_level = @yl,
+                program = @prog,
+                block = @block,
+                contact_number = @contact,
+                email = @email,
+                address = @addr
+            WHERE (
+                    (@id > 0 AND student_id = @id)
+                 OR (@prevRaw <> '' AND student_number = @prevRaw)
+                 OR (@prevDigits <> '' AND REPLACE(student_number, '-', '') = @prevDigits)
+                 OR (@uname <> '' AND username = @uname)
+                  )
+              AND COALESCE(is_deleted, 0) = 0;";
 
-        await using var cmd = new MySqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@snum", string.IsNullOrWhiteSpace(s.StudentNumber) ? DBNull.Value : s.StudentNumber);
-        cmd.Parameters.AddWithValue("@oldSnum", string.IsNullOrWhiteSpace(oldStudentNumber) ? DBNull.Value : oldStudentNumber);
-        cmd.Parameters.AddWithValue("@fn", s.FirstName);
-        cmd.Parameters.AddWithValue("@mn", string.IsNullOrWhiteSpace(s.MiddleName) ? DBNull.Value : s.MiddleName);
-        cmd.Parameters.AddWithValue("@ln", s.LastName);
-        cmd.Parameters.AddWithValue("@gender", string.IsNullOrWhiteSpace(s.Gender) ? DBNull.Value : s.Gender);
-        cmd.Parameters.AddWithValue("@bday", s.Birthdate.HasValue ? s.Birthdate.Value : DBNull.Value);
-        cmd.Parameters.AddWithValue("@yl", string.IsNullOrWhiteSpace(s.YearLevel) ? DBNull.Value : s.YearLevel);
-        cmd.Parameters.AddWithValue("@prog", string.IsNullOrWhiteSpace(s.Program) ? DBNull.Value : s.Program);
-        cmd.Parameters.AddWithValue("@block", string.IsNullOrWhiteSpace(s.Block) ? DBNull.Value : s.Block);
-        cmd.Parameters.AddWithValue("@contact", string.IsNullOrWhiteSpace(s.ContactNumber) ? DBNull.Value : s.ContactNumber);
-        cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(s.Email) ? DBNull.Value : s.Email);
-        cmd.Parameters.AddWithValue("@addr", string.IsNullOrWhiteSpace(s.Address) ? DBNull.Value : s.Address);
-        cmd.Parameters.AddWithValue("@id", s.StudentId);
+        await using var cmd = new MySqlCommand(updateSql, conn);
+        cmd.Parameters.AddWithValue("@snum", record.StudentNumber.Trim());
+        cmd.Parameters.AddWithValue("@fn", record.FirstName.Trim());
+        cmd.Parameters.AddWithValue("@mn", (object?)record.MiddleName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ln", record.LastName.Trim());
+        cmd.Parameters.AddWithValue("@gender", string.IsNullOrWhiteSpace(record.Gender) ? DBNull.Value : record.Gender.Trim());
+        cmd.Parameters.AddWithValue("@bday", (object?)record.Birthdate ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@yl", string.IsNullOrWhiteSpace(record.YearLevel) ? DBNull.Value : record.YearLevel.Trim());
+        cmd.Parameters.AddWithValue("@prog", string.IsNullOrWhiteSpace(record.Program) ? DBNull.Value : record.Program.Trim());
+        cmd.Parameters.AddWithValue("@block", string.IsNullOrWhiteSpace(record.Block) ? DBNull.Value : record.Block.Trim());
+        cmd.Parameters.AddWithValue("@contact", string.IsNullOrWhiteSpace(record.ContactNumber) ? DBNull.Value : record.ContactNumber.Trim());
+        cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(record.Email) ? DBNull.Value : record.Email.Trim());
+        cmd.Parameters.AddWithValue("@addr", string.IsNullOrWhiteSpace(record.Address) ? DBNull.Value : record.Address.Trim());
+        cmd.Parameters.AddWithValue("@id", record.StudentId);
+        cmd.Parameters.AddWithValue("@prevRaw", prevRaw);
+        cmd.Parameters.AddWithValue("@prevDigits", prevDigits);
+        cmd.Parameters.AddWithValue("@uname", cachedUsername);
 
-        return await cmd.ExecuteNonQueryAsync() > 0;
+        int affected = await cmd.ExecuteNonQueryAsync();
+        if (affected > 0)
+            return true;
+
+        // Verify if the row exists (MySQL returns 0 affected rows when values are unchanged)
+        const string existsSql = @"
+            SELECT COUNT(1)
+            FROM students
+            WHERE (
+                    (@id > 0 AND student_id = @id)
+                 OR (@prevRaw <> '' AND student_number = @prevRaw)
+                 OR (@prevDigits <> '' AND REPLACE(student_number, '-', '') = @prevDigits)
+                 OR (@uname <> '' AND username = @uname)
+                  )
+              AND COALESCE(is_deleted, 0) = 0;";
+
+        await using var checkCmd = new MySqlCommand(existsSql, conn);
+        checkCmd.Parameters.AddWithValue("@id", record.StudentId);
+        checkCmd.Parameters.AddWithValue("@prevRaw", prevRaw);
+        checkCmd.Parameters.AddWithValue("@prevDigits", prevDigits);
+        checkCmd.Parameters.AddWithValue("@uname", cachedUsername);
+
+        long count = Convert.ToInt64(await checkCmd.ExecuteScalarAsync());
+        return count > 0;
     }
 
     // 6. SOFT DELETE STUDENT (e2_stdMainPage & d1_Records)

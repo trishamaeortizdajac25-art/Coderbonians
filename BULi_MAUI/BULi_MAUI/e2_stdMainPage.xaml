@@ -224,16 +224,16 @@
                             </VerticalStackLayout>
                         </Grid>
 
-                        <!-- CONTACT (NUMBERS ONLY, MAX 13 DIGITS) -->
+                        <!-- CONTACT (NUMBERS ONLY, MAX 11 DIGITS) -->
                         <VerticalStackLayout Spacing="4" HorizontalOptions="Fill">
                             <Label Text="Contact" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
-                            <Label x:Name="lblContact" Text="09123456789" TextColor="White" FontSize="16" />
+                            <Label x:Name="lblContact" Text="Not yet updated" TextColor="White" FontSize="16" />
                             <Entry x:Name="txtContact"
                                    IsVisible="False"
                                    Keyboard="Numeric"
-                                   MaxLength="13"
+                                   MaxLength="11"
                                    TextChanged="OnContactTextChanged"
-                                   Placeholder="Max 13 digits"
+                                   Placeholder="Enter 11-digit number"
                                    PlaceholderColor="#6C8299"
                                    TextColor="White"
                                    BackgroundColor="#15263A"
@@ -244,10 +244,25 @@
                         <!-- EMAIL -->
                         <VerticalStackLayout Spacing="4" HorizontalOptions="Fill">
                             <Label Text="Email" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
-                            <Label x:Name="lblEmail" Text="test.student@example.com" TextColor="White" FontSize="16" LineBreakMode="TailTruncation" />
-                            <Entry x:Name="txtEmail" IsVisible="False" Keyboard="Email" TextColor="White" BackgroundColor="#15263A" FontSize="16" HeightRequest="42" />
+                            <Label x:Name="lblEmail" Text="Not yet updated" TextColor="White" FontSize="16" LineBreakMode="TailTruncation" />
+                            <Entry x:Name="txtEmail"
+                                   IsVisible="False"
+                                   Keyboard="Email"
+                                   Placeholder="Enter email address"
+                                   PlaceholderColor="#6C8299"
+                                   TextColor="White"
+                                   BackgroundColor="#15263A"
+                                   FontSize="16"
+                                   HeightRequest="42" />
                         </VerticalStackLayout>
 
+                        <!-- ADDRESS -->
+                        <VerticalStackLayout Spacing="4" HorizontalOptions="Fill">
+                            <Label Text="Address" TextColor="#8FA3B8" FontSize="12" FontAttributes="Bold" />
+                            <Label x:Name="lblAddress" Text="Not yet updated" TextColor="White" FontSize="16" LineBreakMode="WordWrap" />
+                            <Entry x:Name="txtAddress" IsVisible="False" Placeholder="Enter address" PlaceholderColor="#6C8299" TextColor="White" BackgroundColor="#15263A" FontSize="16" HeightRequest="42" />
+                        </VerticalStackLayout>
+                        
                     </VerticalStackLayout>
                 </Border>
 
