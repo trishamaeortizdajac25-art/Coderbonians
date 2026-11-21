@@ -33,8 +33,11 @@ public partial class b2_stdSignIn : ContentPage
                 return;
             }
 
-            // Load student data from MySQL into SessionService
-            SessionService.LoginAsStudent(student.StudentId.ToString(), student.FullName);
+            string displayStudentId = !string.IsNullOrWhiteSpace(student.StudentNumber)
+                ? student.StudentNumber
+                : student.StudentId.ToString();
+
+            SessionService.LoginAsStudent(displayStudentId, student.FullName);
             SessionService.Program = student.Program;
             SessionService.YearLevel = student.YearLevel;
             SessionService.Bloc = student.Block;
@@ -42,6 +45,9 @@ public partial class b2_stdSignIn : ContentPage
             SessionService.Contact = student.ContactNumber;
             SessionService.Email = student.Email ?? string.Empty;
             SessionService.BirthDate = student.Birthdate;
+
+            Preferences.Default.Set("StudentSessionUsername", username);
+            Preferences.Default.Set("StudentSessionPassword", password);
 
             await Shell.Current.GoToAsync("//StudentMain");
         }

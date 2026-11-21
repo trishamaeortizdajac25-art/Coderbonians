@@ -1,13 +1,17 @@
 using System.Collections.ObjectModel;
+using MySqlConnector;
 using ScottPlot;
 
 namespace BULi_MAUI;
 
 public partial class c1_HomePage : ContentPage
 {
+    public static string CurrentSessionUsername { get; set; } = string.Empty;
+    public static string CurrentSessionPassword { get; set; } = string.Empty;
+
     private readonly ObservableCollection<StudentRecord> _recentStudents = new();
     private int[] _lastProgramCounts = [0, 0, 0, 0, 0];
-    
+    private bool _isPasswordVisible;
 
     public c1_HomePage()
     {
@@ -31,9 +35,37 @@ public partial class c1_HomePage : ContentPage
     {
         base.OnAppearing();
         ThemeService.ApplyTheme(this, btnThemeToggle);
+        await LoadTeacherUsernameFromDbAsync();
         RefreshProfileVisuals();
         await Task.Delay(100);
         await LoadOverviewDataAsync();
+    }
+
+    private static async Task LoadTeacherUsernameFromDbAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(CurrentSessionUsername))
+            return;
+
+        if (!uint.TryParse(SessionService.UserId, out uint teacherId) || teacherId == 0)
+            return;
+
+        try
+        {
+            await using var conn = new MySqlConnection(SisReadService.ConnectionString);
+            await conn.OpenAsync();
+
+            const string sql = "SELECT username FROM teachers WHERE teacher_id = @id LIMIT 1;";
+            await using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@id", teacherId);
+
+            object? result = await cmd.ExecuteScalarAsync();
+            if (result is string uname && !string.IsNullOrWhiteSpace(uname))
+                CurrentSessionUsername = uname;
+        }
+        catch
+        {
+            // Fallback handled in RefreshProfileVisuals
+        }
     }
 
     // --- SEE ALL NAVIGATION ---
@@ -79,9 +111,6 @@ public partial class c1_HomePage : ContentPage
 
     // --- 4 DRAWER BUTTONS ---
 
-    private string _actualPassword = "••••••••";
-    private bool _isPasswordVisible;
-
     private void RefreshProfileVisuals()
     {
         string initials = SessionService.GetInitials();
@@ -109,19 +138,24 @@ public partial class c1_HomePage : ContentPage
             lblModalProfileInitials.IsVisible = true;
         }
 
-        string username = !string.IsNullOrWhiteSpace(SessionService.Email)
-            ? SessionService.Email
-            : (!string.IsNullOrWhiteSpace(SessionService.FullName) ? SessionService.FullName : "Admin");
+        string username = !string.IsNullOrWhiteSpace(CurrentSessionUsername)
+            ? CurrentSessionUsername
+            : (!string.IsNullOrWhiteSpace(SessionService.Email)
+                ? SessionService.Email
+                : (!string.IsNullOrWhiteSpace(SessionService.FullName) ? SessionService.FullName : "Admin"));
 
         lblProfileUsername.Text = username;
         _isPasswordVisible = false;
         btnTogglePasswordVisibility.Text = "Show";
-        lblProfilePassword.Text = new string('•', Math.Max(8, _actualPassword.Length));
+        lblProfilePassword.Text = !string.IsNullOrEmpty(CurrentSessionPassword)
+            ? new string('•', Math.Max(8, CurrentSessionPassword.Length))
+            : "••••••••";
     }
 
     private async void OnViewProfileClicked(object? sender, EventArgs e)
     {
         await CloseProfileDrawerAsync();
+        await LoadTeacherUsernameFromDbAsync();
         RefreshProfileVisuals();
         ViewProfileOverlay.IsVisible = true;
     }
@@ -131,7 +165,7 @@ public partial class c1_HomePage : ContentPage
         ViewProfileOverlay.IsVisible = false;
     }
 
-private async void OnAddProfileImageClicked(object? sender, EventArgs e)
+    private async void OnAddProfileImageClicked(object? sender, EventArgs e)
     {
         try
         {
@@ -149,7 +183,7 @@ private async void OnAddProfileImageClicked(object? sender, EventArgs e)
             if (string.IsNullOrWhiteSpace(ext))
                 ext = ".jpg";
 
-            string destPath = Path.Combine(FileSystem.AppDataDirectory, $"student_profile{ext}");
+            string destPath = Path.Combine(FileSystem.AppDataDirectory, $"teacher_profile{ext}");
 
             await using var sourceStream = await result.OpenReadAsync();
             await using var destStream = File.Create(destPath);
@@ -184,11 +218,22 @@ private async void OnAddProfileImageClicked(object? sender, EventArgs e)
 
     private void OnTogglePasswordVisibilityClicked(object? sender, EventArgs e)
     {
+        if (string.IsNullOrEmpty(CurrentSessionPassword))
+            CurrentSessionPassword = Preferences.Default.Get("TeacherSessionPassword", string.Empty);
+
         _isPasswordVisible = !_isPasswordVisible;
         btnTogglePasswordVisibility.Text = _isPasswordVisible ? "Hide" : "Show";
-        lblProfilePassword.Text = _isPasswordVisible
-            ? _actualPassword
-            : new string('•', Math.Max(8, _actualPassword.Length));
+
+        if (_isPasswordVisible)
+        {
+            lblProfilePassword.Text = !string.IsNullOrEmpty(CurrentSessionPassword)
+                ? CurrentSessionPassword
+                : "(No cached password — use Change Password or re-login)";
+        }
+        else
+        {
+            lblProfilePassword.Text = new string('•', Math.Max(8, CurrentSessionPassword.Length));
+        }
     }
 
     private async void OnChangePasswordClicked(object? sender, EventArgs e)
@@ -224,6 +269,12 @@ private async void OnAddProfileImageClicked(object? sender, EventArgs e)
             }
 
             var result = await SisWriteService.ChangeTeacherPasswordAsync(teacherId, oldPassword, newPassword);
+            if (result.Success)
+            {
+                CurrentSessionPassword = newPassword;
+                RefreshProfileVisuals();
+            }
+
             await DisplayAlertAsync(result.Success ? "Success" : "Failed", result.Message, "OK");
         }
         catch (Exception ex)
@@ -246,11 +297,12 @@ private async void OnAddProfileImageClicked(object? sender, EventArgs e)
         if (!confirm)
             return;
 
+        CurrentSessionUsername = string.Empty;
+        CurrentSessionPassword = string.Empty;
         SessionService.Logout();
         await Shell.Current.GoToAsync("//RolePage");
     }
 
-    // --- OVERVIEW DATA & MINI PLOT ---
     // --- OVERVIEW DATA & MINI PLOT ---
 
     private void StylePlotDarkTheme()
@@ -278,6 +330,7 @@ private async void OnAddProfileImageClicked(object? sender, EventArgs e)
         overviewPlot.Plot.Axes.Left.TickGenerator =
             new ScottPlot.TickGenerators.NumericAutomatic { IntegerTicksOnly = true };
     }
+
     private async Task LoadOverviewDataAsync()
     {
         try

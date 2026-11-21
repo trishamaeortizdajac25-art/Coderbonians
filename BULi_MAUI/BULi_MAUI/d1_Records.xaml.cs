@@ -248,7 +248,9 @@ public partial class d1_Records : ContentPage
         string lastName = nameParts.Length > 1 ? nameParts[^1] : "User";
         string? middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
 
-        string autoUsername = $"{firstName.ToLowerInvariant()}.{lastName.ToLowerInvariant()}.{Random.Shared.Next(100, 999)}";
+        string cleanFirst = new string(firstName.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+        string cleanLast = new string(lastName.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+        string autoUsername = $"{cleanFirst}.{cleanLast}.{Random.Shared.Next(100, 999)}";
 
         btnAddStudent.IsEnabled = false;
         try
@@ -270,7 +272,7 @@ public partial class d1_Records : ContentPage
             {
                 CrudFormOverlay.IsVisible = false;
                 await LoadRecordsAsync();
-                await DisplayAlertAsync("Added", $"Student added!\nDefault login: {autoUsername} / student123", "OK");
+                await DisplayAlertAsync("Added", $"Student added!\nUsername: {autoUsername}\nPassword: student123", "OK");
             }
         }
         catch (Exception ex)

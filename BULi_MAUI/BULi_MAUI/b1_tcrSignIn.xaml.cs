@@ -30,6 +30,13 @@ public partial class b1_tcrSignIn : ContentPage
 
             SessionService.UserId = result.TeacherId.ToString();
             SessionService.FullName = result.FullName;
+            SessionService.Email = username;
+
+            c1_HomePage.CurrentSessionUsername = username;
+            c1_HomePage.CurrentSessionPassword = password;
+            Preferences.Default.Set("TeacherSessionUsername", username);
+            Preferences.Default.Set("TeacherSessionPassword", password);
+
             SessionService.LoginAsTeacher();
 
             await Shell.Current.GoToAsync("//MainTabs/HomeTab/c1_HomePage");
