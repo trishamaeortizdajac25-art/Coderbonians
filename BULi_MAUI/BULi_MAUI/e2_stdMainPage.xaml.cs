@@ -10,6 +10,11 @@ public partial class e2_stdMainPage : ContentPage
     {
         InitializeComponent();
         dpBirthDate.MaximumDate = DateTime.Today;
+
+        // Attach strict input filters in code-behind (zero XAML changes)
+        txtAge.TextChanged += OnAgeTextChanged;
+        txtName.TextChanged += OnLettersOnlyTextChanged;
+        txtProgram.TextChanged += OnLettersOnlyTextChanged;
     }
 
     protected override async void OnAppearing()
@@ -38,6 +43,14 @@ public partial class e2_stdMainPage : ContentPage
         return digits.Length > maxLength ? digits[..maxLength] : digits;
     }
 
+    private static string KeepLettersOnly(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+
+        return new string(input.Where(c => char.IsLetter(c) || char.IsWhiteSpace(c)).ToArray());
+    }
+
     private async Task LoadStudentInfoAsync()
     {
         try
@@ -47,7 +60,7 @@ public partial class e2_stdMainPage : ContentPage
             string program = !string.IsNullOrWhiteSpace(SessionService.Program) ? SessionService.Program : "BS Information Technology";
             string bloc = !string.IsNullOrWhiteSpace(SessionService.Bloc) ? SessionService.Bloc : "A";
             string yearLevel = !string.IsNullOrWhiteSpace(SessionService.YearLevel) ? SessionService.YearLevel : "1st Year";
-            string contact = KeepDigitsOnly(!string.IsNullOrWhiteSpace(SessionService.Contact) ? SessionService.Contact : "09123456789", 13);
+            string contact = KeepDigitsOnly(!string.IsNullOrWhiteSpace(SessionService.Contact) ? SessionService.Contact : "09123456789", 11);
             string gender = string.Equals(SessionService.Gender, "Female", StringComparison.OrdinalIgnoreCase) ? "Female" : "Male";
             string email = !string.IsNullOrWhiteSpace(SessionService.Email) ? SessionService.Email : "test.student@example.com";
 
@@ -113,7 +126,13 @@ public partial class e2_stdMainPage : ContentPage
         txtEmail.IsVisible = editing;
 
         if (editing)
+        {
+            // Unlock Age field in edit mode
+            txtAge.IsReadOnly = false;
+            txtAge.TextColor = Colors.White;
+            txtContact.MaxLength = 11;
             txtName.Focus();
+        }
     }
 
     // --- INPUT RESTRICTIONS & DATE SELECTION ---
@@ -128,12 +147,35 @@ public partial class e2_stdMainPage : ContentPage
             entry.Text = filtered;
     }
 
+    private void OnAgeTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (sender is not Entry entry)
+            return;
+
+        // 2 digits only, no characters
+        string filtered = KeepDigitsOnly(e.NewTextValue, 2);
+        if (entry.Text != filtered)
+            entry.Text = filtered;
+    }
+
     private void OnContactTextChanged(object? sender, TextChangedEventArgs e)
     {
         if (sender is not Entry entry)
             return;
 
-        string filtered = KeepDigitsOnly(e.NewTextValue, 13);
+        // 11 digits max, no characters
+        string filtered = KeepDigitsOnly(e.NewTextValue, 11);
+        if (entry.Text != filtered)
+            entry.Text = filtered;
+    }
+
+    private void OnLettersOnlyTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (sender is not Entry entry)
+            return;
+
+        // Characters/letters only, no numbers
+        string filtered = KeepLettersOnly(e.NewTextValue);
         if (entry.Text != filtered)
             entry.Text = filtered;
     }
@@ -202,7 +244,16 @@ public partial class e2_stdMainPage : ContentPage
         }
 
         string cleanId = KeepDigitsOnly(txtStudentId.Text);
-        string cleanContact = KeepDigitsOnly(txtContact.Text, 13);
+        string cleanContact = KeepDigitsOnly(txtContact.Text, 11);
+        string cleanAgeText = KeepDigitsOnly(txtAge.Text, 2);
+        string fullName = KeepLettersOnly(txtName.Text).Trim();
+        string program = KeepLettersOnly(txtProgram.Text).Trim();
+
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            await DisplayAlertAsync("Validation", "Name must contain letters only and cannot be empty.", "OK");
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(cleanId))
         {
@@ -210,45 +261,113 @@ public partial class e2_stdMainPage : ContentPage
             return;
         }
 
-        if (cleanContact.Length > 13)
+        if (cleanContact.Length != 11)
         {
-            await DisplayAlertAsync("Validation", "Contact number cannot exceed 13 digits.", "OK");
+            await DisplayAlertAsync("Validation", "Contact number must be exactly 11 digits.", "OK");
             return;
         }
 
-        SessionService.FullName = txtName.Text?.Trim() ?? string.Empty;
-        SessionService.UserId = cleanId;
-        SessionService.Program = txtProgram.Text?.Trim() ?? string.Empty;
-        SessionService.BirthDate = dpBirthDate.Date ?? new DateTime(2008, 6, 15);
-        SessionService.Bloc = txtBloc.Text?.Trim() ?? string.Empty;
-        SessionService.YearLevel = txtYearLevel.Text?.Trim() ?? string.Empty;
-        SessionService.Gender = pckGender.SelectedItem?.ToString() ?? "Male";
-        SessionService.Contact = cleanContact;
-        SessionService.Email = txtEmail.Text?.Trim() ?? string.Empty;
+        if (!int.TryParse(cleanAgeText, out int editedAge) || cleanAgeText.Length == 0)
+        {
+            await DisplayAlertAsync("Validation", "Age must be a 2-digit number.", "OK");
+            return;
+        }
 
-        SetEditMode(false);
-        await LoadStudentInfoAsync();
-        RefreshProfileVisuals();
+        // Keep BirthDate consistent with edited Age if user typed a new age directly
+        DateTime birthDate = dpBirthDate.Date ?? new DateTime(2008, 6, 15);
+        if (CalculateAge(birthDate) != editedAge)
+        {
+            int targetYear = DateTime.Today.Year - editedAge;
+            int day = Math.Min(birthDate.Day, DateTime.DaysInMonth(targetYear, birthDate.Month));
+            birthDate = new DateTime(targetYear, birthDate.Month, day);
+        }
+
+        string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string firstName = nameParts.Length > 0 ? nameParts[0] : "Student";
+        string lastName = nameParts.Length > 1 ? nameParts[^1] : "User";
+        string? middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
+
+        string bloc = txtBloc.Text?.Trim() ?? string.Empty;
+        string yearLevel = txtYearLevel.Text?.Trim() ?? string.Empty;
+        string gender = pckGender.SelectedItem?.ToString() ?? "Male";
+        string email = txtEmail.Text?.Trim() ?? string.Empty;
+
+        btnEditOrSave.IsEnabled = false;
+        try
+        {
+            string previousId = KeepDigitsOnly(SessionService.UserId);
+            uint.TryParse(previousId, out uint dbStudentId);
+
+            var record = new StudentRecord
+            {
+                StudentId = dbStudentId,
+                StudentNumber = cleanId,
+                FirstName = firstName,
+                MiddleName = middleName,
+                LastName = lastName,
+                Gender = gender,
+                Birthdate = birthDate,
+                YearLevel = yearLevel,
+                Program = program,
+                Block = bloc,
+                ContactNumber = cleanContact,
+                Email = email
+            };
+
+            bool updated = await SisWriteService.UpdateStudentProfileAsync(record, previousId);
+            if (!updated)
+            {
+                await DisplayAlertAsync("Save Error", "Could not update record in the database.", "OK");
+                return;
+            }
+
+            // Update SessionService so the UI reflects the new Student ID and Age immediately
+            SessionService.UserId = cleanId;
+            SessionService.FullName = fullName;
+            SessionService.Program = program;
+            SessionService.BirthDate = birthDate;
+            SessionService.Bloc = bloc;
+            SessionService.YearLevel = yearLevel;
+            SessionService.Gender = gender;
+            SessionService.Contact = cleanContact;
+            SessionService.Email = email;
+
+            SetEditMode(false);
+            await LoadStudentInfoAsync();
+            RefreshProfileVisuals();
+            await DisplayAlertAsync("Saved", "Profile updated!", "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Database Error", ex.Message, "OK");
+        }
+        finally
+        {
+            btnEditOrSave.IsEnabled = true;
+        }
     }
 
     private async void OnDeleteStudentClicked(object? sender, EventArgs e)
     {
-        bool confirm = await DisplayAlertAsync("Delete Record", "Clear this student record?", "Delete", "Cancel");
+        bool confirm = await DisplayAlertAsync("Delete Account", "Are you sure you want to delete your student record?", "Delete", "Cancel");
         if (!confirm)
             return;
 
-        SessionService.FullName = string.Empty;
-        SessionService.Program = string.Empty;
-        SessionService.Bloc = string.Empty;
-        SessionService.YearLevel = string.Empty;
-        SessionService.Gender = "Male";
-        SessionService.Contact = string.Empty;
-        SessionService.Email = string.Empty;
-        SessionService.BirthDate = null;
+        try
+        {
+            if (uint.TryParse(SessionService.UserId, out uint dbStudentId) && dbStudentId > 0)
+            {
+                await SisWriteService.DeleteStudentAsync(dbStudentId);
+            }
 
-        SetEditMode(false);
-        await LoadStudentInfoAsync();
-        RefreshProfileVisuals();
+            SessionService.Logout();
+            await DisplayAlertAsync("Deleted", "Your student record has been removed.", "OK");
+            await Shell.Current.GoToAsync("//RolePage");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Delete Error", ex.Message, "OK");
+        }
     }
 
     // --- RIGHT SLIDE-OUT PROFILE DRAWER ---

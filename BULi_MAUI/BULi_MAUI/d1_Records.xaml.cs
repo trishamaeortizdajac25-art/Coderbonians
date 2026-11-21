@@ -35,7 +35,7 @@ public partial class d1_Records : ContentPage
     {
         base.OnAppearing();
         ThemeService.ApplyTheme(this);
-    
+
         base.OnAppearing();
         await LoadRecordsAsync();
     }
@@ -232,28 +232,166 @@ public partial class d1_Records : ContentPage
 
     private async void OnAddStudentClicked(object? sender, EventArgs e)
     {
-        await DisplayAlertAsync("Add Student", "Backend INSERT hook ready.", "OK");
-        CrudFormOverlay.IsVisible = false;
+        string studentNumber = txtStudentId.Text?.Trim() ?? string.Empty;
+        string fullName = txtStudentName.Text?.Trim() ?? string.Empty;
+        string bloc = string.IsNullOrWhiteSpace(txtBloc.Text) ? "A" : txtBloc.Text.Trim().ToUpperInvariant();
+        string program = string.IsNullOrWhiteSpace(txtProgram.Text) ? "BS Information Technology" : txtProgram.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(studentNumber) || string.IsNullOrWhiteSpace(fullName))
+        {
+            await DisplayAlertAsync("Missing Fields", "Please enter both Student ID and Student Name.", "OK");
+            return;
+        }
+
+        string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string firstName = nameParts.Length > 0 ? nameParts[0] : "Student";
+        string lastName = nameParts.Length > 1 ? nameParts[^1] : "User";
+        string? middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
+
+        string autoUsername = $"{firstName.ToLowerInvariant()}.{lastName.ToLowerInvariant()}.{Random.Shared.Next(100, 999)}";
+
+        btnAddStudent.IsEnabled = false;
+        try
+        {
+            var newRecord = new StudentRecord
+            {
+                StudentNumber = studentNumber,
+                FirstName = firstName,
+                MiddleName = middleName,
+                LastName = lastName,
+                YearLevel = "1st Year",
+                Program = program,
+                Block = bloc,
+                Status = "Active"
+            };
+
+            bool added = await SisWriteService.AddStudentRecordAsync(newRecord, autoUsername, "student123");
+            if (added)
+            {
+                CrudFormOverlay.IsVisible = false;
+                await LoadRecordsAsync();
+                await DisplayAlertAsync("Added", $"Student added!\nDefault login: {autoUsername} / student123", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Insert Error", ex.Message, "OK");
+        }
+        finally
+        {
+            btnAddStudent.IsEnabled = true;
+        }
     }
 
     private async void OnUpdateStudentClicked(object? sender, EventArgs e)
     {
-        await DisplayAlertAsync("Update Student", "Backend UPDATE hook ready.", "OK");
-        CrudFormOverlay.IsVisible = false;
+        var selected = _allStudents.Where(s => s.IsSelected).ToList();
+        if (selected.Count == 0)
+            return;
+
+        btnUpdateStudent.IsEnabled = false;
+        try
+        {
+            if (selected.Count == 1)
+            {
+                var student = selected[0];
+                string fullName = txtStudentName.Text?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(fullName))
+                {
+                    await DisplayAlertAsync("Missing Fields", "Student Name cannot be empty.", "OK");
+                    return;
+                }
+
+                string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                student.StudentNumber = txtStudentId.Text?.Trim() ?? student.StudentNumber;
+                student.FirstName = nameParts.Length > 0 ? nameParts[0] : student.FirstName;
+                student.LastName = nameParts.Length > 1 ? nameParts[^1] : student.LastName;
+                student.MiddleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
+                student.Block = string.IsNullOrWhiteSpace(txtBloc.Text) ? student.Block : txtBloc.Text.Trim().ToUpperInvariant();
+                student.Program = string.IsNullOrWhiteSpace(txtProgram.Text) ? student.Program : txtProgram.Text.Trim();
+
+                await SisWriteService.UpdateStudentProfileAsync(student);
+            }
+            else
+            {
+                // Batch update Bloc and/or Program for all selected students
+                foreach (var student in selected)
+                {
+                    if (!string.IsNullOrWhiteSpace(txtBloc.Text))
+                        student.Block = txtBloc.Text.Trim().ToUpperInvariant();
+                    if (!string.IsNullOrWhiteSpace(txtProgram.Text))
+                        student.Program = txtProgram.Text.Trim();
+
+                    await SisWriteService.UpdateStudentProfileAsync(student);
+                }
+            }
+
+            CrudFormOverlay.IsVisible = false;
+            await LoadRecordsAsync();
+            await DisplayAlertAsync("Updated", "Student record(s) updated in database!", "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Update Error", ex.Message, "OK");
+        }
+        finally
+        {
+            btnUpdateStudent.IsEnabled = true;
+        }
     }
 
     private async void OnDeleteStudentClicked(object? sender, EventArgs e)
     {
-        await DisplayAlertAsync("Delete Student", "Backend DELETE hook ready.", "OK");
-        CrudFormOverlay.IsVisible = false;
+        var selected = _allStudents.Where(s => s.IsSelected).ToList();
+        if (selected.Count == 0)
+            return;
+
+        bool confirm = await DisplayAlertAsync("Delete Record", $"Delete {selected.Count} selected student record(s)?", "Delete", "Cancel");
+        if (!confirm)
+            return;
+
+        btnDeleteStudent.IsEnabled = false;
+        try
+        {
+            foreach (var student in selected)
+                await SisWriteService.DeleteStudentAsync(student.StudentId);
+
+            CrudFormOverlay.IsVisible = false;
+            await LoadRecordsAsync();
+            await DisplayAlertAsync("Deleted", "Record(s) removed from database.", "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Delete Error", ex.Message, "OK");
+        }
+        finally
+        {
+            btnDeleteStudent.IsEnabled = true;
+        }
     }
 
     private async void OnDeleteSelectedClicked(object? sender, EventArgs e)
     {
-        int count = _allStudents.Count(s => s.IsSelected);
-        if (count == 0)
+        var selected = _allStudents.Where(s => s.IsSelected).ToList();
+        if (selected.Count == 0)
             return;
 
-        await DisplayAlertAsync("Delete Selected", $"Backend batch DELETE hook ready for {count} student(s).", "OK");
+        bool confirm = await DisplayAlertAsync("Delete Selected", $"Are you sure you want to delete {selected.Count} student(s)?", "Delete", "Cancel");
+        if (!confirm)
+            return;
+
+        try
+        {
+            foreach (var student in selected)
+                await SisWriteService.DeleteStudentAsync(student.StudentId);
+
+            btnDeleteSelected.IsVisible = false;
+            await LoadRecordsAsync();
+            await DisplayAlertAsync("Deleted", $"{selected.Count} student record(s) deleted.", "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Delete Error", ex.Message, "OK");
+        }
     }
 }

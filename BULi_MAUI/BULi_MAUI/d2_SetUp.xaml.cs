@@ -228,14 +228,50 @@ public partial class d2_SetUp : ContentPage
 
     private async Task SaveProfile()
     {
-        SessionService.LoginAsStudent(StudentIdEntry.Text.Trim(), NameEntry.Text.Trim());
-        SessionService.Program = string.IsNullOrWhiteSpace(ProgramEntry.Text) ? "BS Computer Science" : ProgramEntry.Text.Trim();
-        SessionService.YearLevel = YearPicker.SelectedItem?.ToString() ?? "1st Year";
-        SessionService.Bloc = string.IsNullOrWhiteSpace(BlocEntry.Text) ? "A" : BlocEntry.Text.Trim().ToUpperInvariant();
-        SessionService.BirthDate = BirthDatePicker.Date ?? DateTime.Today.AddYears(-18);
-        SessionService.Gender = GenderPicker.SelectedItem?.ToString() ?? "Prefer not to say";
-        SessionService.Contact = ContactEntry.Text?.Trim() ?? string.Empty;
-        SessionService.Email = EmailEntry.Text?.Trim() ?? string.Empty;
+        string fullName = NameEntry.Text.Trim();
+        string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string firstName = nameParts.Length > 0 ? nameParts[0] : "Student";
+        string lastName = nameParts.Length > 1 ? nameParts[^1] : "User";
+        string? middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
+
+        string studentNumber = StudentIdEntry.Text.Trim();
+        string program = string.IsNullOrWhiteSpace(ProgramEntry.Text) ? "BS Computer Science" : ProgramEntry.Text.Trim();
+        string yearLevel = YearPicker.SelectedItem?.ToString() ?? "1st Year";
+        string bloc = string.IsNullOrWhiteSpace(BlocEntry.Text) ? "A" : BlocEntry.Text.Trim().ToUpperInvariant();
+        DateTime birthDate = BirthDatePicker.Date ?? DateTime.Today.AddYears(-18);
+        string gender = GenderPicker.SelectedItem?.ToString() ?? "Prefer not to say";
+        string contact = ContactEntry.Text?.Trim() ?? string.Empty;
+        string email = EmailEntry.Text?.Trim() ?? string.Empty;
+
+        if (uint.TryParse(SessionService.UserId, out uint dbStudentId) && dbStudentId > 0)
+        {
+            var record = new StudentRecord
+            {
+                StudentId = dbStudentId,
+                StudentNumber = studentNumber,
+                FirstName = firstName,
+                MiddleName = middleName,
+                LastName = lastName,
+                Gender = gender,
+                Birthdate = birthDate,
+                YearLevel = yearLevel,
+                Program = program,
+                Block = bloc,
+                ContactNumber = contact,
+                Email = email
+            };
+
+            await SisWriteService.UpdateStudentProfileAsync(record);
+        }
+
+        SessionService.LoginAsStudent(SessionService.UserId, fullName);
+        SessionService.Program = program;
+        SessionService.YearLevel = yearLevel;
+        SessionService.Bloc = bloc;
+        SessionService.BirthDate = birthDate;
+        SessionService.Gender = gender;
+        SessionService.Contact = contact;
+        SessionService.Email = email;
 
         if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
             SessionService.PhotoPath = _selectedPhotoPath;

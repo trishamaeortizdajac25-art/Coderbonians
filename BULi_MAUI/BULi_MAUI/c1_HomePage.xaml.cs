@@ -194,7 +194,42 @@ private async void OnAddProfileImageClicked(object? sender, EventArgs e)
     private async void OnChangePasswordClicked(object? sender, EventArgs e)
     {
         await CloseProfileDrawerAsync();
-        await DisplayAlertAsync("Change Password", "Change password hook ready.", "OK");
+
+        string? oldPassword = await DisplayPromptAsync(
+            "Change Password",
+            "Enter your current password:",
+            accept: "Next",
+            cancel: "Cancel",
+            placeholder: "Current password");
+
+        if (string.IsNullOrWhiteSpace(oldPassword))
+            return;
+
+        string? newPassword = await DisplayPromptAsync(
+            "Change Password",
+            "Enter your new password:",
+            accept: "Save",
+            cancel: "Cancel",
+            placeholder: "New password");
+
+        if (string.IsNullOrWhiteSpace(newPassword))
+            return;
+
+        try
+        {
+            if (!uint.TryParse(SessionService.UserId, out uint teacherId) || teacherId == 0)
+            {
+                await DisplayAlertAsync("Error", "Teacher session not found. Please sign in again.", "OK");
+                return;
+            }
+
+            var result = await SisWriteService.ChangeTeacherPasswordAsync(teacherId, oldPassword, newPassword);
+            await DisplayAlertAsync(result.Success ? "Success" : "Failed", result.Message, "OK");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Database Error", ex.Message, "OK");
+        }
     }
 
     private void OnToggleThemeClicked(object? sender, EventArgs e)
