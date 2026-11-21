@@ -234,8 +234,8 @@ public partial class d1_Records : ContentPage
     {
         string studentNumber = txtStudentId.Text?.Trim() ?? string.Empty;
         string fullName = txtStudentName.Text?.Trim() ?? string.Empty;
-        string bloc = string.IsNullOrWhiteSpace(txtBloc.Text) ? "A" : txtBloc.Text.Trim().ToUpperInvariant();
-        string program = string.IsNullOrWhiteSpace(txtProgram.Text) ? "BS Information Technology" : txtProgram.Text.Trim();
+        string bloc = txtBloc.Text?.Trim().ToUpperInvariant() ?? string.Empty;
+        string program = txtProgram.Text?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(studentNumber) || string.IsNullOrWhiteSpace(fullName))
         {
@@ -261,9 +261,14 @@ public partial class d1_Records : ContentPage
                 FirstName = firstName,
                 MiddleName = middleName,
                 LastName = lastName,
-                YearLevel = "1st Year",
+                YearLevel = string.Empty,
                 Program = program,
                 Block = bloc,
+                Gender = string.Empty,
+                ContactNumber = string.Empty,
+                Email = null,
+                Address = null,
+                Birthdate = null,
                 Status = "Active"
             };
 
@@ -284,7 +289,6 @@ public partial class d1_Records : ContentPage
             btnAddStudent.IsEnabled = true;
         }
     }
-
     private async void OnUpdateStudentClicked(object? sender, EventArgs e)
     {
         var selected = _allStudents.Where(s => s.IsSelected).ToList();

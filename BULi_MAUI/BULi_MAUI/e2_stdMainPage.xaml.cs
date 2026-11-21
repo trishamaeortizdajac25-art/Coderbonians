@@ -85,40 +85,46 @@ public partial class e2_stdMainPage : ContentPage
     {
         try
         {
-            string fullName = !string.IsNullOrWhiteSpace(SessionService.FullName) ? SessionService.FullName : "Test Student";
-            string studentId = KeepDigitsOnly(!string.IsNullOrWhiteSpace(SessionService.UserId) ? SessionService.UserId : "20260099");
-            string program = !string.IsNullOrWhiteSpace(SessionService.Program) ? SessionService.Program : "BS Information Technology";
-            string bloc = !string.IsNullOrWhiteSpace(SessionService.Bloc) ? SessionService.Bloc : "A";
-            string yearLevel = !string.IsNullOrWhiteSpace(SessionService.YearLevel) ? SessionService.YearLevel : "1st Year";
-            string contact = KeepDigitsOnly(!string.IsNullOrWhiteSpace(SessionService.Contact) ? SessionService.Contact : "09123456789", 11);
-            string gender = string.Equals(SessionService.Gender, "Female", StringComparison.OrdinalIgnoreCase) ? "Female" : "Male";
-            string email = !string.IsNullOrWhiteSpace(SessionService.Email) ? SessionService.Email : "test.student@example.com";
+            const string placeholder = "Not yet updated";
 
-            DateTime birthDate = SessionService.BirthDate ?? new DateTime(2008, 6, 15);
-            int age = CalculateAge(birthDate);
+            string fullName = SessionService.FullName?.Trim() ?? string.Empty;
+            string studentId = KeepDigitsOnly(SessionService.UserId);
+            string program = SessionService.Program?.Trim() ?? string.Empty;
+            string bloc = SessionService.Bloc?.Trim() ?? string.Empty;
+            string yearLevel = SessionService.YearLevel?.Trim() ?? string.Empty;
+            string contact = KeepDigitsOnly(SessionService.Contact, 11);
+            string gender = SessionService.Gender?.Trim() ?? string.Empty;
+            string email = SessionService.Email?.Trim() ?? string.Empty;
 
-            lblHeaderName.Text = fullName;
+            bool hasBirthDate = SessionService.BirthDate.HasValue;
+            DateTime birthDate = SessionService.BirthDate ?? DateTime.Today;
+            string birthDateText = hasBirthDate ? birthDate.ToString("yyyy-MM-dd") : string.Empty;
+            string ageText = hasBirthDate ? CalculateAge(birthDate).ToString() : string.Empty;
+
+            lblHeaderName.Text = string.IsNullOrWhiteSpace(fullName) ? "Student" : fullName;
             lblHeaderSub.Text = $"ID: {studentId}";
 
-            lblName.Text = fullName;
-            lblStudentId.Text = studentId;
-            lblProgram.Text = program;
-            lblBirthDate.Text = birthDate.ToString("yyyy-MM-dd");
-            lblAge.Text = age.ToString();
-            lblBloc.Text = bloc;
-            lblYearLevel.Text = yearLevel;
-            lblGender.Text = gender;
-            lblContact.Text = contact;
-            lblEmail.Text = email;
+            // View labels show "Not yet updated" when empty
+            lblName.Text = string.IsNullOrWhiteSpace(fullName) ? placeholder : fullName;
+            lblStudentId.Text = string.IsNullOrWhiteSpace(studentId) ? placeholder : studentId;
+            lblProgram.Text = string.IsNullOrWhiteSpace(program) ? placeholder : program;
+            lblBirthDate.Text = string.IsNullOrWhiteSpace(birthDateText) ? placeholder : birthDateText;
+            lblAge.Text = string.IsNullOrWhiteSpace(ageText) ? placeholder : ageText;
+            lblBloc.Text = string.IsNullOrWhiteSpace(bloc) ? placeholder : bloc;
+            lblYearLevel.Text = string.IsNullOrWhiteSpace(yearLevel) ? placeholder : yearLevel;
+            lblGender.Text = string.IsNullOrWhiteSpace(gender) ? placeholder : gender;
+            lblContact.Text = string.IsNullOrWhiteSpace(contact) ? placeholder : contact;
+            lblEmail.Text = string.IsNullOrWhiteSpace(email) ? placeholder : email;
 
+            // Edit fields remain clean/empty so the student can type immediately
             txtName.Text = fullName;
             txtStudentId.Text = studentId;
             txtProgram.Text = program;
             dpBirthDate.Date = birthDate;
-            txtAge.Text = age.ToString();
+            txtAge.Text = ageText;
             txtBloc.Text = bloc;
             txtYearLevel.Text = yearLevel;
-            pckGender.SelectedItem = gender;
+            pckGender.SelectedItem = string.IsNullOrWhiteSpace(gender) ? null : gender;
             txtContact.Text = contact;
             txtEmail.Text = email;
 
