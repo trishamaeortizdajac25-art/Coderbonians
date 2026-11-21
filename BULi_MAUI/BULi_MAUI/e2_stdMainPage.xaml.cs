@@ -46,6 +46,14 @@ public partial class e2_stdMainPage : ContentPage
         return digits.Length > maxLength ? digits[..maxLength] : digits;
     }
 
+    private static string KeepStudentIdChars(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+
+        return new string(input.Where(c => char.IsDigit(c) || c == '-').ToArray());
+    }
+
     private static string KeepLettersOnly(string? input)
     {
         if (string.IsNullOrEmpty(input))
@@ -94,7 +102,7 @@ public partial class e2_stdMainPage : ContentPage
             const string placeholder = "Not yet updated";
 
             string fullName = SessionService.FullName?.Trim() ?? string.Empty;
-            string studentId = KeepDigitsOnly(SessionService.UserId);
+            string studentId = KeepStudentIdChars(SessionService.UserId);
             string program = SessionService.Program?.Trim() ?? string.Empty;
             string bloc = SessionService.Bloc?.Trim() ?? string.Empty;
             string yearLevel = SessionService.YearLevel?.Trim() ?? string.Empty;
@@ -111,9 +119,8 @@ public partial class e2_stdMainPage : ContentPage
             string ageText = hasBirthDate ? CalculateAge(birthDate).ToString() : string.Empty;
 
             lblHeaderName.Text = string.IsNullOrWhiteSpace(fullName) ? "Student" : fullName;
-            lblHeaderSub.Text = $"ID: {studentId}";
+            lblHeaderSub.Text = string.IsNullOrWhiteSpace(studentId) ? "ID: Not yet updated" : $"ID: {studentId}";
 
-            // View labels show "Not yet updated" when empty
             lblName.Text = string.IsNullOrWhiteSpace(fullName) ? placeholder : fullName;
             lblStudentId.Text = string.IsNullOrWhiteSpace(studentId) ? placeholder : studentId;
             lblProgram.Text = string.IsNullOrWhiteSpace(program) ? placeholder : program;
@@ -126,7 +133,6 @@ public partial class e2_stdMainPage : ContentPage
             lblEmail.Text = string.IsNullOrWhiteSpace(email) ? placeholder : email;
             lblAddress.Text = string.IsNullOrWhiteSpace(address) ? placeholder : address;
 
-            // Edit fields remain clean/empty so the student can type immediately
             txtName.Text = fullName;
             txtStudentId.Text = studentId;
             txtProgram.Text = program;
@@ -176,6 +182,7 @@ public partial class e2_stdMainPage : ContentPage
 
         if (editing)
         {
+            txtStudentId.Keyboard = Keyboard.Text;
             txtAge.IsReadOnly = false;
             txtAge.TextColor = Colors.White;
             txtContact.MaxLength = 11;
@@ -190,7 +197,10 @@ public partial class e2_stdMainPage : ContentPage
         if (sender is not Entry entry)
             return;
 
-        string filtered = KeepDigitsOnly(e.NewTextValue);
+        string filtered = entry == txtStudentId
+            ? KeepStudentIdChars(e.NewTextValue)
+            : KeepDigitsOnly(e.NewTextValue);
+
         if (entry.Text != filtered)
             entry.Text = filtered;
     }
@@ -296,7 +306,7 @@ public partial class e2_stdMainPage : ContentPage
             return;
         }
 
-        string cleanId = KeepDigitsOnly(txtStudentId.Text);
+        string cleanId = KeepStudentIdChars(txtStudentId.Text).Trim();
         string cleanContact = KeepDigitsOnly(txtContact.Text, 11);
         string cleanAgeText = KeepDigitsOnly(txtAge.Text, 2);
         string fullName = KeepLettersOnly(txtName.Text).Trim();
@@ -308,9 +318,9 @@ public partial class e2_stdMainPage : ContentPage
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(cleanId))
+        if (string.IsNullOrWhiteSpace(cleanId) || !cleanId.Any(char.IsDigit))
         {
-            await DisplayAlertAsync("Validation", "Student ID must contain numbers only.", "OK");
+            await DisplayAlertAsync("Validation", "Student ID must contain numbers and '-' only.", "OK");
             return;
         }
 
@@ -354,8 +364,9 @@ public partial class e2_stdMainPage : ContentPage
         btnEditOrSave.IsEnabled = false;
         try
         {
-            string previousId = KeepDigitsOnly(SessionService.UserId);
-            uint.TryParse(previousId, out uint dbStudentId);
+            string previousId = KeepStudentIdChars(SessionService.UserId);
+            string dbIdRaw = Preferences.Default.Get("StudentSessionDbId", previousId);
+            uint.TryParse(dbIdRaw, out uint dbStudentId);
 
             var record = new StudentRecord
             {
@@ -415,7 +426,8 @@ public partial class e2_stdMainPage : ContentPage
 
         try
         {
-            if (uint.TryParse(SessionService.UserId, out uint dbStudentId) && dbStudentId > 0)
+            string dbIdRaw = Preferences.Default.Get("StudentSessionDbId", SessionService.UserId);
+            if (uint.TryParse(dbIdRaw, out uint dbStudentId) && dbStudentId > 0)
             {
                 await SisWriteService.DeleteStudentAsync(dbStudentId);
             }
@@ -466,7 +478,7 @@ public partial class e2_stdMainPage : ContentPage
     private async void OnViewProfileClicked(object? sender, EventArgs e)
     {
         await CloseProfileDrawerAsync();
-        await LoadStudentExtraFromDbAsync(KeepDigitsOnly(SessionService.UserId));
+        await LoadStudentExtraFromDbAsync(KeepStudentIdChars(SessionService.UserId));
         RefreshProfileVisuals();
         ViewProfileOverlay.IsVisible = true;
     }
@@ -571,8 +583,9 @@ public partial class e2_stdMainPage : ContentPage
 
         try
         {
-            string cleanId = KeepDigitsOnly(SessionService.UserId);
-            uint.TryParse(cleanId, out uint dbStudentId);
+            string cleanId = KeepStudentIdChars(SessionService.UserId);
+            string dbIdRaw = Preferences.Default.Get("StudentSessionDbId", cleanId);
+            uint.TryParse(dbIdRaw, out uint dbStudentId);
 
             var result = await SisWriteService.ChangeStudentPasswordAsync(dbStudentId, cleanId, oldPassword, newPassword);
             if (result.Success)
@@ -605,6 +618,7 @@ public partial class e2_stdMainPage : ContentPage
             return;
 
         Preferences.Default.Remove("StudentSessionPassword");
+        Preferences.Default.Remove("StudentSessionDbId");
         SessionService.Logout();
         await Shell.Current.GoToAsync("//RolePage");
     }

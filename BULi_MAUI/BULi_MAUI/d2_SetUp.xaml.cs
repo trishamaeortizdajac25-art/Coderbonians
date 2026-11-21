@@ -24,7 +24,6 @@ public partial class d2_SetUp : ContentPage
         if (SessionService.IsLoggedIn && SessionService.Role == "Student")
         {
             NameEntry.Text = SessionService.FullName;
-            // Only pre-fill StudentIdEntry if it isn't the internal auto-increment DB id
             string cachedDbId = Preferences.Default.Get("StudentSessionDbId", string.Empty);
             StudentIdEntry.Text = SessionService.UserId == cachedDbId ? string.Empty : SessionService.UserId;
             ProgramEntry.Text = SessionService.Program;
@@ -57,7 +56,7 @@ public partial class d2_SetUp : ContentPage
             return;
 
         string input = e.NewTextValue ?? string.Empty;
-        string filtered = new string(input.Where(char.IsDigit).ToArray());
+        string filtered = new string(input.Where(c => char.IsDigit(c) || c == '-').ToArray());
 
         if (filtered != input)
         {
@@ -66,7 +65,7 @@ public partial class d2_SetUp : ContentPage
             StudentIdEntry.CursorPosition = filtered.Length;
             _isFilteringInput = false;
 
-            ShowFieldError(StudentIdBorder, StudentIdErrorLabel, "Numbers only (0-9).");
+            ShowFieldError(StudentIdBorder, StudentIdErrorLabel, "Numbers and '-' only.");
         }
         else
         {
@@ -165,8 +164,7 @@ public partial class d2_SetUp : ContentPage
 
     private async void OnSkipTapped(object? sender, TappedEventArgs e)
     {
-        // Keep everything empty so e2_stdMainPage displays "Not yet updated"
-        string cleanId = new string((StudentIdEntry.Text ?? string.Empty).Where(char.IsDigit).ToArray());
+        string cleanId = new string((StudentIdEntry.Text ?? string.Empty).Where(c => char.IsDigit(c) || c == '-').ToArray());
         string fullName = NameEntry.Text?.Trim() ?? string.Empty;
 
         SessionService.LoginAsStudent(cleanId, fullName);
@@ -192,9 +190,9 @@ public partial class d2_SetUp : ContentPage
         if (_step == 2)
         {
             string id = StudentIdEntry.Text?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(id) || !id.All(char.IsDigit))
+            if (string.IsNullOrWhiteSpace(id) || !id.Any(char.IsDigit) || !id.All(c => char.IsDigit(c) || c == '-'))
             {
-                ShowFieldError(StudentIdBorder, StudentIdErrorLabel, "Please enter a valid numeric Student ID.");
+                ShowFieldError(StudentIdBorder, StudentIdErrorLabel, "Please enter a valid Student ID (numbers and '-' only).");
                 return false;
             }
         }
@@ -229,7 +227,7 @@ public partial class d2_SetUp : ContentPage
             string lastName = nameParts.Length > 1 ? nameParts[^1] : "User";
             string? middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
 
-            string studentNumber = new string((StudentIdEntry.Text ?? string.Empty).Where(char.IsDigit).ToArray());
+            string studentNumber = new string((StudentIdEntry.Text ?? string.Empty).Where(c => char.IsDigit(c) || c == '-').ToArray());
             string program = ProgramEntry.Text?.Trim() ?? string.Empty;
             string yearLevel = YearPicker.SelectedItem?.ToString() ?? string.Empty;
             string bloc = BlocEntry.Text?.Trim().ToUpperInvariant() ?? string.Empty;
@@ -266,7 +264,6 @@ public partial class d2_SetUp : ContentPage
                 return;
             }
 
-            // Set SessionService.UserId to the StudentNumber so e2_stdMainPage displays and updates cleanly
             SessionService.LoginAsStudent(studentNumber, fullName);
             SessionService.Program = program;
             SessionService.YearLevel = yearLevel;

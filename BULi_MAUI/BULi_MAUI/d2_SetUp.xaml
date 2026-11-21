@@ -98,7 +98,7 @@
                     <VerticalStackLayout Spacing="6">
                         <Label Text="FULL NAME" Style="{StaticResource FieldLabel}" />
                         <Border Style="{StaticResource FieldBorder}">
-                            <Entry x:Name="NameEntry" Placeholder="Juan Dela Cruz"
+                            <Entry x:Name="NameEntry" Placeholder="e.g., Juan Dela Cruz"
                                    TextColor="White" PlaceholderColor="#4F657B"
                                    BackgroundColor="Transparent" />
                         </Border>
@@ -139,8 +139,8 @@
                         <Label Text="STUDENT ID" Style="{StaticResource FieldLabel}" />
                         <Border x:Name="StudentIdBorder" Style="{StaticResource FieldBorder}">
                             <Entry x:Name="StudentIdEntry"
-                                   Placeholder="20260001"
-                                   Keyboard="Numeric"
+                                   Placeholder="e.g., 2026-0001"
+                                   Keyboard="Text"
                                    TextColor="White"
                                    PlaceholderColor="#4F657B"
                                    BackgroundColor="Transparent"
@@ -152,7 +152,7 @@
                     <VerticalStackLayout Spacing="6">
                         <Label Text="PROGRAM" Style="{StaticResource FieldLabel}" />
                         <Border Style="{StaticResource FieldBorder}">
-                            <Entry x:Name="ProgramEntry" Placeholder="BS Information Technology"
+                            <Entry x:Name="ProgramEntry" Placeholder="e.g., BS Information Technology"
                                    TextColor="White" PlaceholderColor="#4F657B"
                                    BackgroundColor="Transparent" />
                         </Border>
@@ -180,7 +180,7 @@
                         <VerticalStackLayout Grid.Column="1" Spacing="6">
                             <Label Text="BLOC" Style="{StaticResource FieldLabel}" />
                             <Border Style="{StaticResource FieldBorder}">
-                                <Entry x:Name="BlocEntry" Placeholder="A"
+                                <Entry x:Name="BlocEntry" Placeholder="e.g., A"
                                        TextColor="White" PlaceholderColor="#4F657B"
                                        BackgroundColor="Transparent" MaxLength="2" />
                             </Border>
@@ -195,7 +195,7 @@
                         <Label Text="CONTACT NUMBER" Style="{StaticResource FieldLabel}" />
                         <Border x:Name="ContactBorder" Style="{StaticResource FieldBorder}">
                             <Entry x:Name="ContactEntry"
-                                   Placeholder="09123456789"
+                                   Placeholder="e.g., 09123456789"
                                    Keyboard="Numeric"
                                    MaxLength="11"
                                    TextColor="White"
@@ -209,7 +209,7 @@
                     <VerticalStackLayout Spacing="6">
                         <Label Text="EMAIL" Style="{StaticResource FieldLabel}" />
                         <Border Style="{StaticResource FieldBorder}">
-                            <Entry x:Name="EmailEntry" Placeholder="name@example.com"
+                            <Entry x:Name="EmailEntry" Placeholder="e.g., name@example.com"
                                    Keyboard="Email"
                                    TextColor="White" PlaceholderColor="#4F657B"
                                    BackgroundColor="Transparent" />
@@ -219,7 +219,7 @@
                     <VerticalStackLayout Spacing="6">
                         <Label Text="ADDRESS" Style="{StaticResource FieldLabel}" />
                         <Border Style="{StaticResource FieldBorder}">
-                            <Entry x:Name="AddressEntry" Placeholder="Enter home address"
+                            <Entry x:Name="AddressEntry" Placeholder="e.g., Brgy. Centro, Masbate City"
                                    TextColor="White" PlaceholderColor="#4F657B"
                                    BackgroundColor="Transparent" />
                         </Border>
