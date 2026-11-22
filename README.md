@@ -4,7 +4,7 @@ Group Name: Coderbonians
 
 GitHub Repository Link: https://github.com/trishamaeortizdajac25-art/Coderbonians
 
-Members
+Member List:
 
   • Trisha Mae Dajac
   
@@ -14,7 +14,8 @@ Members
   
   • Remia Panadera
 
-Task Matrix
+
+Task Matrix:
 
 Trisha Mae Dajac: Desktop ScottPlot Analytics & Dashboard
 
