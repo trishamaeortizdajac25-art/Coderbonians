@@ -52,10 +52,42 @@
                         Padding="14,0" />
             </Grid>
 
-            <!-- ROW 1: SINGLE FILTERS TOGGLE BUTTON + COLLAPSIBLE AO3-STYLE FILTER PANEL -->
+            <!-- ROW 1: SEARCH BAR + FILTERS TOGGLE + COLLAPSIBLE FILTER PANEL -->
             <VerticalStackLayout Grid.Row="1" Spacing="10">
-                <HorizontalStackLayout Spacing="10" HorizontalOptions="End">
+                <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="8">
+                    <Border x:Name="SearchBarBorder"
+                            Grid.Column="0"
+                            BackgroundColor="#15263A"
+                            Stroke="#22364D"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 10"
+                            Padding="10,0">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Entry x:Name="txtSearchRecords"
+                                   Placeholder="Search name or ID..."
+                                   PlaceholderColor="#6E859E"
+                                   TextColor="White"
+                                   BackgroundColor="Transparent"
+                                   FontSize="13"
+                                   HeightRequest="38"
+                                   ReturnType="Search"
+                                   TextChanged="OnSearchTextChanged" />
+
+                            <Button x:Name="btnClearSearch"
+                                    Grid.Column="1"
+                                    Text="✕"
+                                    IsVisible="False"
+                                    Clicked="OnClearSearchClicked"
+                                    BackgroundColor="Transparent"
+                                    TextColor="#8FA3B8"
+                                    FontSize="12"
+                                    HeightRequest="32"
+                                    Padding="4,0" />
+                        </Grid>
+                    </Border>
+
                     <Button x:Name="btnFilterToggle"
+                            Grid.Column="1"
                             Text="Filters v"
                             Clicked="OnToggleFiltersClicked"
                             BackgroundColor="#15263A"
@@ -65,10 +97,11 @@
                             FontAttributes="Bold"
                             FontSize="12"
                             CornerRadius="10"
-                            HeightRequest="36"
-                            Padding="14,0" />
+                            HeightRequest="38"
+                            Padding="12,0" />
 
                     <Button x:Name="btnSelectAll"
+                            Grid.Column="2"
                             Text="Select All"
                             IsVisible="False"
                             Clicked="OnSelectAllClicked"
@@ -78,9 +111,9 @@
                             BorderWidth="1"
                             FontSize="12"
                             CornerRadius="10"
-                            HeightRequest="36"
+                            HeightRequest="38"
                             Padding="12,0" />
-                </HorizontalStackLayout>
+                </Grid>
 
                 <!-- AO3-style collapsible filter panel -->
                 <Border x:Name="FilterPanel"
