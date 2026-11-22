@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:sp="clr-namespace:ScottPlot.Maui;assembly=ScottPlot.Maui"
              x:Class="BULi_MAUI.e1_Graphs"
              Shell.NavBarIsVisible="False">
 
@@ -59,15 +58,16 @@
             </HorizontalStackLayout>
         </VerticalStackLayout>
 
-        <!-- SCOTTPLOT CARD (UNCONNECTED UI SHELL) -->
+        <!-- CHART CARD (plot is rendered to an image at true pixel size) -->
         <Border x:Name="ChartCard"
                 Grid.Row="1"
                 BackgroundColor="#0D1B2A"
                 Stroke="#22364D"
                 StrokeThickness="1"
                 StrokeShape="RoundRectangle 16"
-                Padding="12">
-            <Grid RowDefinitions="Auto, *">
+                Padding="12"
+                VerticalOptions="Fill">
+            <Grid RowDefinitions="Auto, *" RowSpacing="6">
                 <Label x:Name="lblChartTitle"
                        Grid.Row="0"
                        Text="Enrolled Students per Program Distribution"
@@ -75,11 +75,13 @@
                        FontSize="14"
                        FontAttributes="Bold"
                        LineBreakMode="WordWrap"
-                       Margin="4,0,4,8" />
+                       Margin="4,0,4,4" />
 
-                <sp:MauiPlot x:Name="analyticsPlot"
-                             Grid.Row="1"
-                             BackgroundColor="#0D1B2A" />
+                <Image x:Name="analyticsImage"
+                       Grid.Row="1"
+                       Aspect="Fill"
+                       HorizontalOptions="Fill"
+                       VerticalOptions="Fill" />
             </Grid>
         </Border>
 

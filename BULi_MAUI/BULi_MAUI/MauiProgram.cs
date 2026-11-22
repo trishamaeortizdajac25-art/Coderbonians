@@ -17,6 +17,14 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
+        Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("NoBorder", (handler, view) =>
+        {
+#if WINDOWS
+            handler.PlatformView.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+            handler.PlatformView.Background = null;
+#endif
+        });
+
 #if DEBUG
         builder.Logging.AddDebug();
 #endif

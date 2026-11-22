@@ -1,4 +1,3 @@
-using DocumentFormat.OpenXml.Packaging;
 using ScottPlot;
 
 namespace BULi_MAUI;
@@ -9,25 +8,34 @@ public partial class e1_Graphs : ContentPage
     private Dictionary<string, int> _programCounts = new();
     private Dictionary<string, int> _yearCounts = new();
 
+    private readonly ScottPlot.Plot _plot = new();
+    private double _lastRenderW;
+    private double _lastRenderH;
+
     public e1_Graphs()
     {
         InitializeComponent();
-        analyticsPlot.UserInputProcessor.IsEnabled = false;
 
-        analyticsPlot.SizeChanged += (_, _) =>
+        analyticsImage.SizeChanged += (_, _) =>
         {
-            if (analyticsPlot.Width > 0 && analyticsPlot.Height > 0)
-                RenderCurrentChart();
+            if (analyticsImage.Width > 0 && analyticsImage.Height > 0 &&
+                (Math.Abs(analyticsImage.Width - _lastRenderW) > 1 ||
+                 Math.Abs(analyticsImage.Height - _lastRenderH) > 1))
+            {
+                Dispatcher.Dispatch(RenderCurrentChart);
+            }
         };
 
         ApplyGraphsTheme();
+        RenderCurrentChart();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
         ApplyGraphsTheme();
-        await Task.Delay(100);
+        RenderCurrentChart();
+        await Task.Delay(120);
         await LoadAnalyticsDataAsync();
     }
 
@@ -81,22 +89,25 @@ public partial class e1_Graphs : ContentPage
         var fg = isDark ? ScottPlot.Color.FromHex("#DCE6F2") : ScottPlot.Color.FromHex("#0F172A");
         var grid = isDark ? ScottPlot.Color.FromHex("#22364D") : ScottPlot.Color.FromHex("#CBD5E1");
 
-        analyticsPlot.BackgroundColor = isDark
-            ? Microsoft.Maui.Graphics.Color.FromArgb("#0D1B2A")
-            : Microsoft.Maui.Graphics.Color.FromArgb("#FFFFFF");
+        _plot.FigureBackground.Color = bg;
+        _plot.DataBackground.Color = bg;
+        _plot.Axes.Color(fg);
+        _plot.Grid.MajorLineColor = grid;
 
-        analyticsPlot.Plot.FigureBackground.Color = bg;
-        analyticsPlot.Plot.DataBackground.Color = bg;
-        analyticsPlot.Plot.Axes.Color(fg);
-        analyticsPlot.Plot.Grid.MajorLineColor = grid;
+        _plot.Axes.Bottom.IsVisible = true;
+        _plot.Axes.Bottom.MinimumSize = 52;
+        _plot.Axes.Bottom.TickLabelStyle.IsVisible = true;
+        _plot.Axes.Bottom.TickLabelStyle.ForeColor = fg;
+        _plot.Axes.Bottom.TickLabelStyle.FontSize = 11;
+        _plot.Axes.Bottom.TickLabelStyle.Rotation = 0;
+        _plot.Axes.Bottom.MajorTickStyle.Length = 4;
 
-        analyticsPlot.Plot.Axes.Bottom.MinimumSize = 32;
-        analyticsPlot.Plot.Axes.Bottom.TickLabelStyle.ForeColor = fg;
-        analyticsPlot.Plot.Axes.Bottom.TickLabelStyle.FontSize = 11;
-
-        analyticsPlot.Plot.Axes.Left.TickLabelStyle.ForeColor = fg;
-        analyticsPlot.Plot.Axes.Left.TickLabelStyle.FontSize = 11;
-        analyticsPlot.Plot.Axes.Left.TickGenerator =
+        _plot.Axes.Left.IsVisible = true;
+        _plot.Axes.Left.MinimumSize = 38;
+        _plot.Axes.Left.TickLabelStyle.IsVisible = true;
+        _plot.Axes.Left.TickLabelStyle.ForeColor = fg;
+        _plot.Axes.Left.TickLabelStyle.FontSize = 11;
+        _plot.Axes.Left.TickGenerator =
             new ScottPlot.TickGenerators.NumericAutomatic { IntegerTicksOnly = true };
     }
 
@@ -124,6 +135,7 @@ public partial class e1_Graphs : ContentPage
         string[] labels;
         double[] values;
         string barHex;
+        string xAxisTitle;
 
         if (_showingProgramChart)
         {
@@ -140,6 +152,7 @@ public partial class e1_Graphs : ContentPage
                 .Select(name => (double)(_programCounts.TryGetValue(name, out int c) ? c : 0))
                 .ToArray();
             barHex = "#FFA500";
+            xAxisTitle = "Program";
         }
         else
         {
@@ -148,36 +161,48 @@ public partial class e1_Graphs : ContentPage
                 .Select(yr => (double)(_yearCounts.TryGetValue(yr, out int c) ? c : 0))
                 .ToArray();
             barHex = "#87CEEB";
+            xAxisTitle = "Year Level";
         }
 
-        analyticsPlot.Plot.Clear();
-        analyticsPlot.Plot.Axes.Rules.Clear();
+        bool isDark = SessionService.IsDarkMode;
+        var fg = isDark ? ScottPlot.Color.FromHex("#DCE6F2") : ScottPlot.Color.FromHex("#0F172A");
+
+        _plot.Clear();
+        _plot.Axes.Rules.Clear();
         StylePlotTheme();
 
         double[] positions = Enumerable.Range(0, labels.Length).Select(i => (double)i).ToArray();
-        var bars = analyticsPlot.Plot.Add.Bars(positions, values);
-        foreach (var bar in bars.Bars)
+        var bars = _plot.Add.Bars(positions, values);
+        for (int i = 0; i < bars.Bars.Count; i++)
         {
-            bar.FillColor = ScottPlot.Color.FromHex(barHex);
-            bar.Size = 0.55;
+            bars.Bars[i].FillColor = ScottPlot.Color.FromHex(barHex);
+            bars.Bars[i].LineWidth = 0;
+            bars.Bars[i].Size = 0.55;
+            bars.Bars[i].Label = values[i].ToString("0");
         }
+        bars.ValueLabelStyle.ForeColor = fg;
+        bars.ValueLabelStyle.FontSize = 12;
+        bars.ValueLabelStyle.Bold = true;
 
-        var ticks = positions.Select((pos, i) => new Tick(pos, labels[i])).ToArray();
-        analyticsPlot.Plot.Axes.Bottom.TickGenerator =
-            new ScottPlot.TickGenerators.NumericManual(ticks);
+        _plot.Axes.Bottom.SetTicks(positions, labels);
+        _plot.Axes.Bottom.Label.Text = xAxisTitle;
+        _plot.Axes.Bottom.Label.ForeColor = fg;
+        _plot.Axes.Left.Label.Text = "Students";
+        _plot.Axes.Left.Label.ForeColor = fg;
 
         double maxVal = values.Length > 0 ? values.Max() : 0;
         double topY = Math.Max(4, Math.Ceiling(maxVal * 1.25));
-        double minX = -0.6;
-        double maxX = labels.Length - 0.4;
 
-        analyticsPlot.Plot.Axes.SetLimits(minX, maxX, 0, topY);
-        analyticsPlot.Plot.Axes.Rules.Add(
-            new ScottPlot.AxisRules.LockedHorizontal(analyticsPlot.Plot.Axes.Bottom, minX, maxX));
-        analyticsPlot.Plot.Axes.Rules.Add(
-            new ScottPlot.AxisRules.LockedVertical(analyticsPlot.Plot.Axes.Left, 0, topY));
+        _plot.Axes.Margins(bottom: 0.05, top: 0.1);
+        _plot.Axes.SetLimitsX(-0.6, labels.Length - 0.4);
+        _plot.Axes.SetLimitsY(0, topY);
 
-        analyticsPlot.Refresh();
+        if (analyticsImage.Width > 0 && analyticsImage.Height > 0)
+        {
+            _lastRenderW = analyticsImage.Width;
+            _lastRenderH = analyticsImage.Height;
+            analyticsImage.Source = PlotImageHelper.Render(_plot, _lastRenderW, _lastRenderH);
+        }
     }
 
     private void OnShowProgramChartClicked(object? sender, EventArgs e)
@@ -217,7 +242,8 @@ public partial class e1_Graphs : ContentPage
             string fileName = $"BULi_{chartTag}_{DateTime.Now:yyyyMMdd_HHmmss}.png";
             string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
 
-            analyticsPlot.Plot.SavePng(filePath, 900, 520);
+            _plot.ScaleFactor = 1f;
+            _plot.SavePng(filePath, 900, 520);
 
             await Share.Default.RequestAsync(new ShareFileRequest
             {

@@ -19,22 +19,27 @@ public partial class c1_HomePage : ContentPage
     private int[] _lastProgramCounts = [0, 0, 0, 0, 0];
     private bool _isPasswordVisible;
 
+    private readonly ScottPlot.Plot _plot = new();
+    private double _lastRenderW;
+    private double _lastRenderH;
+
     public c1_HomePage()
     {
         InitializeComponent();
-        overviewPlot.UserInputProcessor.IsEnabled = false;
         recentStudentsView.ItemsSource = _recentStudents;
 
-        overviewPlot.SizeChanged += (_, _) =>
+        overviewImage.SizeChanged += (_, _) =>
         {
-            if (overviewPlot.Width > 0 && overviewPlot.Height > 0)
+            if (overviewImage.Width > 0 && overviewImage.Height > 0 &&
+                (Math.Abs(overviewImage.Width - _lastRenderW) > 1 ||
+                 Math.Abs(overviewImage.Height - _lastRenderH) > 1))
             {
-                StylePlotDarkTheme();
-                overviewPlot.Refresh();
+                Dispatcher.Dispatch(() => UpdateMiniPlot(_lastProgramCounts));
             }
         };
 
         StylePlotDarkTheme();
+        UpdateMiniPlot(_lastProgramCounts);
     }
 
     protected override async void OnAppearing()
@@ -43,7 +48,8 @@ public partial class c1_HomePage : ContentPage
         ApplyAllThemes();
         await LoadTeacherInfoFromDbAsync();
         RefreshProfileVisuals();
-        await Task.Delay(100);
+        UpdateMiniPlot(_lastProgramCounts);
+        await Task.Delay(120);
         await LoadOverviewDataAsync();
     }
 
@@ -99,7 +105,7 @@ public partial class c1_HomePage : ContentPage
         var secondaryText = isDark ? MauiColor.FromArgb("#8FA3B8") : MauiColor.FromArgb("#475569");
         var linkBlue = isDark ? MauiColor.FromArgb("#87CEEB") : MauiColor.FromArgb("#0284C7");
 
-        // Program cards & ScottPlot panel
+        // Program cards & plot panel
         Border[] programCards = [cardBSIT, cardBSCS, cardBSMET, cardBSBIO, cardBSCHEM, cardPlot];
         foreach (var card in programCards)
         {
@@ -470,22 +476,25 @@ public partial class c1_HomePage : ContentPage
         var fg = isDark ? SpColor.FromHex("#DCE6F2") : SpColor.FromHex("#0F172A");
         var grid = isDark ? SpColor.FromHex("#22364D") : SpColor.FromHex("#CBD5E1");
 
-        overviewPlot.BackgroundColor = isDark
-            ? MauiColor.FromArgb("#0D1B2A")
-            : MauiColor.FromArgb("#FFFFFF");
+        _plot.FigureBackground.Color = bg;
+        _plot.DataBackground.Color = bg;
+        _plot.Axes.Color(fg);
+        _plot.Grid.MajorLineColor = grid;
 
-        overviewPlot.Plot.FigureBackground.Color = bg;
-        overviewPlot.Plot.DataBackground.Color = bg;
-        overviewPlot.Plot.Axes.Color(fg);
-        overviewPlot.Plot.Grid.MajorLineColor = grid;
+        _plot.Axes.Bottom.IsVisible = true;
+        _plot.Axes.Bottom.MinimumSize = 44;
+        _plot.Axes.Bottom.TickLabelStyle.IsVisible = true;
+        _plot.Axes.Bottom.TickLabelStyle.ForeColor = fg;
+        _plot.Axes.Bottom.TickLabelStyle.FontSize = 10;
+        _plot.Axes.Bottom.TickLabelStyle.Rotation = 0;
+        _plot.Axes.Bottom.MajorTickStyle.Length = 4;
 
-        overviewPlot.Plot.Axes.Bottom.MinimumSize = 28;
-        overviewPlot.Plot.Axes.Bottom.TickLabelStyle.ForeColor = fg;
-        overviewPlot.Plot.Axes.Bottom.TickLabelStyle.FontSize = 10;
-
-        overviewPlot.Plot.Axes.Left.TickLabelStyle.ForeColor = fg;
-        overviewPlot.Plot.Axes.Left.TickLabelStyle.FontSize = 10;
-        overviewPlot.Plot.Axes.Left.TickGenerator =
+        _plot.Axes.Left.IsVisible = true;
+        _plot.Axes.Left.MinimumSize = 34;
+        _plot.Axes.Left.TickLabelStyle.IsVisible = true;
+        _plot.Axes.Left.TickLabelStyle.ForeColor = fg;
+        _plot.Axes.Left.TickLabelStyle.FontSize = 10;
+        _plot.Axes.Left.TickGenerator =
             new ScottPlot.TickGenerators.NumericAutomatic { IntegerTicksOnly = true };
     }
 
@@ -543,38 +552,47 @@ public partial class c1_HomePage : ContentPage
 
     private void UpdateMiniPlot(int[] valuesInt)
     {
-        overviewPlot.Plot.Clear();
-        overviewPlot.Plot.Axes.Rules.Clear();
+        bool isDark = SessionService.IsDarkMode;
+        var fg = isDark ? SpColor.FromHex("#DCE6F2") : SpColor.FromHex("#0F172A");
+
+        _plot.Clear();
+        _plot.Axes.Rules.Clear();
         StylePlotDarkTheme();
 
         string[] labels = ["BSIT", "BSCS", "BSMET", "BSBIO", "BSCHEM"];
         double[] positions = Enumerable.Range(0, labels.Length).Select(i => (double)i).ToArray();
         double[] values = valuesInt.Select(v => (double)v).ToArray();
 
-        var bars = overviewPlot.Plot.Add.Bars(positions, values);
-        foreach (var bar in bars.Bars)
+        var bars = _plot.Add.Bars(positions, values);
+        for (int i = 0; i < bars.Bars.Count; i++)
         {
-            bar.FillColor = SpColor.FromHex("#FFA500");
-            bar.Size = 0.55;
+            bars.Bars[i].FillColor = SpColor.FromHex("#FFA500");
+            bars.Bars[i].LineWidth = 0;
+            bars.Bars[i].Size = 0.55;
+            bars.Bars[i].Label = values[i].ToString("0");
         }
+        bars.ValueLabelStyle.ForeColor = fg;
+        bars.ValueLabelStyle.FontSize = 11;
+        bars.ValueLabelStyle.Bold = true;
 
-        var ticks = positions
-            .Select((pos, i) => new Tick(pos, labels[i]))
-            .ToArray();
-        overviewPlot.Plot.Axes.Bottom.TickGenerator =
-            new ScottPlot.TickGenerators.NumericManual(ticks);
+        _plot.Axes.Bottom.SetTicks(positions, labels);
+        _plot.Axes.Bottom.Label.Text = "Program";
+        _plot.Axes.Bottom.Label.ForeColor = fg;
+        _plot.Axes.Left.Label.Text = "Students";
+        _plot.Axes.Left.Label.ForeColor = fg;
 
         double maxVal = values.Length > 0 ? values.Max() : 0;
         double topY = Math.Max(4, Math.Ceiling(maxVal * 1.25));
-        double minX = -0.6;
-        double maxX = labels.Length - 0.4;
 
-        overviewPlot.Plot.Axes.SetLimits(minX, maxX, 0, topY);
-        overviewPlot.Plot.Axes.Rules.Add(
-            new ScottPlot.AxisRules.LockedHorizontal(overviewPlot.Plot.Axes.Bottom, minX, maxX));
-        overviewPlot.Plot.Axes.Rules.Add(
-            new ScottPlot.AxisRules.LockedVertical(overviewPlot.Plot.Axes.Left, 0, topY));
+        _plot.Axes.Margins(bottom: 0.05, top: 0.1);
+        _plot.Axes.SetLimitsX(-0.6, labels.Length - 0.4);
+        _plot.Axes.SetLimitsY(0, topY);
 
-        overviewPlot.Refresh();
+        if (overviewImage.Width > 0 && overviewImage.Height > 0)
+        {
+            _lastRenderW = overviewImage.Width;
+            _lastRenderH = overviewImage.Height;
+            overviewImage.Source = PlotImageHelper.Render(_plot, _lastRenderW, _lastRenderH);
+        }
     }
 }

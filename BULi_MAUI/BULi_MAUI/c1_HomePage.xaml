@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:BULi_MAUI"
-             xmlns:sp="clr-namespace:ScottPlot.Maui;assembly=ScottPlot.Maui"
              x:Class="BULi_MAUI.c1_HomePage"
              Shell.NavBarIsVisible="False">
 
@@ -138,7 +137,7 @@
                     </Grid>
                 </VerticalStackLayout>
 
-                <!-- SMALL SCOTTPLOT IN BETWEEN -->
+                <!-- PROGRAM DISTRIBUTION CHART (rendered to an image at true pixel size) -->
                 <VerticalStackLayout Spacing="8">
                     <Label Text="PROGRAM DISTRIBUTION"
                            TextColor="#87CEEB"
@@ -152,18 +151,20 @@
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 14"
                             Padding="10"
-                            HeightRequest="175">
-                        <Grid RowDefinitions="Auto, *">
+                            HeightRequest="290">
+                        <Grid RowDefinitions="Auto, *" RowSpacing="4">
                             <Label Grid.Row="0"
                                    Text="Enrolled Students by Program"
                                    TextColor="#DCE6F2"
                                    FontSize="12"
                                    FontAttributes="Bold"
-                                   Margin="4,0,0,4" />
+                                   Margin="4,0,0,2" />
 
-                            <sp:MauiPlot x:Name="overviewPlot"
-                                         Grid.Row="1"
-                                         BackgroundColor="#0D1B2A" />
+                            <Image x:Name="overviewImage"
+                                   Grid.Row="1"
+                                   Aspect="Fill"
+                                   HorizontalOptions="Fill"
+                                   VerticalOptions="Fill" />
                         </Grid>
                     </Border>
                 </VerticalStackLayout>
