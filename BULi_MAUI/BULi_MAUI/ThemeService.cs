@@ -63,9 +63,9 @@ public static class ThemeService
             Shell.SetTabBarTitleColor(shell, isDark ? Color.FromArgb("#FFA500") : Color.FromArgb("#D97706"));
         }
 
-        if (page.Content is IVisualTreeElement root)
+        if (page.Content is not null)
         {
-            ApplyToTree(root, isDark);
+            ApplyToElement(page.Content, isDark);
         }
     }
 
@@ -73,12 +73,11 @@ public static class ThemeService
     {
         if (c is null) return false;
         string hex = c.ToArgbHex();
-        // Keep intentional accents & status badge colors intact
-        return hex is "#FFFFA500" or "#FFD97706" // Orange
-            or "#FFFF6B6B" or "#FFDC2626"        // Red
-            or "#FF4ADE80" or "#FF16A34A"        // Green
-            or "#FFFACC15" or "#FFCA8A04"        // Yellow
-            or "#FF0D1B2A";                      // Dark text on orange buttons
+        return hex is "#FFFFA500" or "#FFD97706"
+            or "#FFFF6B6B" or "#FFDC2626"
+            or "#FF4ADE80" or "#FF16A34A"
+            or "#FFFACC15" or "#FFCA8A04"
+            or "#FF0D1B2A";
     }
 
     private static bool IsSecondaryColor(Color? c)
@@ -95,16 +94,17 @@ public static class ThemeService
         return hex is "#FF87CEEB" or "#FF0284C7";
     }
 
-    private static void ApplyToTree(IVisualTreeElement element, bool isDark)
+    public static void ApplyToElement(object? node, bool isDark)
     {
-        // Hook CollectionView / Element children added dynamically (e.g., DataTemplates)
-        if (element is Element mauiElement)
+        if (node is null) return;
+
+        if (node is Element mauiElement)
         {
             mauiElement.ChildAdded -= OnDynamicChildAdded;
             mauiElement.ChildAdded += OnDynamicChildAdded;
         }
 
-        if (element is Border border)
+        if (node is Border border)
         {
             string? bgHex = border.BackgroundColor?.ToArgbHex();
             if (isDark)
@@ -112,23 +112,38 @@ public static class ThemeService
                 if (bgHex is "#FFFFFFFF" or "#FFF8FAFC" or "#FFF1F5F9")
                     border.BackgroundColor = DarkCard;
                 if (border.Stroke is SolidColorBrush scb && scb.Color.ToArgbHex() == "#FFCBD5E1")
-                    border.Stroke = DarkStroke;
+                    border.Stroke = new SolidColorBrush(DarkStroke);
             }
             else
             {
                 if (bgHex is "#FF0D1B2A")
                 {
                     border.BackgroundColor = LightCard;
-                    border.Stroke = LightStroke;
+                    border.Stroke = new SolidColorBrush(LightStroke);
                 }
                 else if (bgHex is "#FF15263A")
                 {
                     border.BackgroundColor = LightCardAlt;
-                    border.Stroke = LightStroke;
+                    border.Stroke = new SolidColorBrush(LightStroke);
+                }
+                else if (border.Stroke is SolidColorBrush scb && scb.Color.ToArgbHex() == "#FF22364D")
+                {
+                    border.Stroke = new SolidColorBrush(LightStroke);
                 }
             }
+
+            if (border.Content is not null)
+                ApplyToElement(border.Content, isDark);
         }
-        else if (element is Label label)
+        else if (node is ContentView cv && cv.Content is not null)
+        {
+            ApplyToElement(cv.Content, isDark);
+        }
+        else if (node is ScrollView sv && sv.Content is not null)
+        {
+            ApplyToElement(sv.Content, isDark);
+        }
+        else if (node is Label label)
         {
             if (!IsAccentColor(label.TextColor))
             {
@@ -140,59 +155,64 @@ public static class ThemeService
                     label.TextColor = isDark ? Colors.White : LightPrimaryText;
             }
         }
-        else if (element is Entry entry)
+        else if (node is Entry entry)
         {
             entry.TextColor = isDark ? Colors.White : LightPrimaryText;
             entry.BackgroundColor = isDark ? DarkCardAlt : Color.FromArgb("#F1F5F9");
             entry.PlaceholderColor = isDark ? Color.FromArgb("#6C8299") : Color.FromArgb("#64748B");
         }
-        else if (element is DatePicker datePicker)
+        else if (node is DatePicker datePicker)
         {
             datePicker.TextColor = isDark ? Colors.White : LightPrimaryText;
             datePicker.BackgroundColor = isDark ? DarkCardAlt : Color.FromArgb("#F1F5F9");
         }
-        else if (element is Picker picker)
+        else if (node is Picker picker)
         {
             picker.TextColor = isDark ? Colors.White : LightPrimaryText;
             picker.TitleColor = isDark ? DarkSecondaryText : LightSecondaryText;
             picker.BackgroundColor = isDark ? DarkCardAlt : Color.FromArgb("#F1F5F9");
         }
-        else if (element is Button btn)
+        else if (node is Button btn)
         {
             string? bgHex = btn.BackgroundColor?.ToArgbHex();
-            if (isDark)
+            bool isLogoutBtn = bgHex == "#FF3A151B";
+
+            if (!isLogoutBtn)
             {
-                if (bgHex is "#FFF1F5F9" or "#FFE2E8F0")
+                if (isDark)
                 {
-                    btn.BackgroundColor = DarkCardAlt;
-                    btn.BorderColor = DarkStroke;
-                    if (!IsAccentColor(btn.TextColor))
-                        btn.TextColor = IsLinkBlue(btn.TextColor) ? Color.FromArgb("#87CEEB") : Colors.White;
+                    if (bgHex is "#FFF1F5F9" or "#FFE2E8F0" or "#FFFFFFFF" or "#FFF8FAFC")
+                    {
+                        btn.BackgroundColor = DarkCardAlt;
+                        btn.BorderColor = DarkStroke;
+                        if (!IsAccentColor(btn.TextColor))
+                            btn.TextColor = IsLinkBlue(btn.TextColor) ? Color.FromArgb("#87CEEB") : Colors.White;
+                    }
                 }
-            }
-            else
-            {
-                if (bgHex is "#FF15263A")
+                else
                 {
-                    btn.BackgroundColor = Color.FromArgb("#F1F5F9");
-                    btn.BorderColor = LightStroke;
-                    if (!IsAccentColor(btn.TextColor))
-                        btn.TextColor = IsLinkBlue(btn.TextColor) ? Color.FromArgb("#0284C7") : LightPrimaryText;
+                    if (bgHex is "#FF15263A" or "#FF0D1B2A")
+                    {
+                        btn.BackgroundColor = Color.FromArgb("#F1F5F9");
+                        btn.BorderColor = LightStroke;
+                        if (!IsAccentColor(btn.TextColor))
+                            btn.TextColor = IsLinkBlue(btn.TextColor) ? Color.FromArgb("#0284C7") : LightPrimaryText;
+                    }
                 }
             }
         }
 
-        foreach (var child in element.GetVisualChildren())
+        if (node is IVisualTreeElement vte)
         {
-            ApplyToTree(child, isDark);
+            foreach (var child in vte.GetVisualChildren())
+            {
+                ApplyToElement(child, isDark);
+            }
         }
     }
 
     private static void OnDynamicChildAdded(object? sender, ElementEventArgs e)
     {
-        if (e.Element is IVisualTreeElement vte)
-        {
-            ApplyToTree(vte, SessionService.IsDarkMode);
-        }
+        ApplyToElement(e.Element, SessionService.IsDarkMode);
     }
 }

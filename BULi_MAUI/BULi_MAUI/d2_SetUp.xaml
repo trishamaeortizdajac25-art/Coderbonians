@@ -77,9 +77,16 @@
                                 Stroke="#22364D"
                                 StrokeThickness="1">
                             <Grid>
-                                <Label Text="+" TextColor="#8FA3B8" FontSize="28"
-                                       HorizontalOptions="Center" VerticalOptions="Center" />
-                                <Image x:Name="ProfileImage" Aspect="AspectFill" />
+                                <Label x:Name="AvatarInitialsLabel"
+                                       Text="U"
+                                       TextColor="White"
+                                       FontSize="26"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                                <Image x:Name="ProfileImage"
+                                       IsVisible="False"
+                                       Aspect="AspectFill" />
                             </Grid>
                         </Border>
                         <Border StrokeShape="RoundRectangle 15"
@@ -98,21 +105,33 @@
                     <VerticalStackLayout Spacing="6">
                         <Label Text="FULL NAME" Style="{StaticResource FieldLabel}" />
                         <Border Style="{StaticResource FieldBorder}">
-                            <Entry x:Name="NameEntry" Placeholder="e.g., Juan Dela Cruz"
-                                   TextColor="White" PlaceholderColor="#4F657B"
-                                   BackgroundColor="Transparent" />
+                            <Entry x:Name="NameEntry"
+                                   Placeholder="e.g., Juan Dela Cruz"
+                                   TextColor="White"
+                                   PlaceholderColor="#4F657B"
+                                   BackgroundColor="Transparent"
+                                   TextChanged="OnNameTextChanged" />
                         </Border>
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="6">
                         <Label Text="BIRTH DATE" Style="{StaticResource FieldLabel}" />
                         <Border Style="{StaticResource FieldBorder}">
-                            <DatePicker x:Name="BirthDatePicker"
-                                        TextColor="White"
-                                        BackgroundColor="Transparent"
-                                        DateSelected="OnBirthDateSelected" />
+                            <Grid>
+                                <Entry x:Name="BirthDateGhostEntry"
+                                       Placeholder="mm/dd/yyyy"
+                                       PlaceholderColor="#4F657B"
+                                       TextColor="White"
+                                       BackgroundColor="Transparent"
+                                       InputTransparent="True" />
+                                <DatePicker x:Name="BirthDatePicker"
+                                            Format="MM/dd/yyyy"
+                                            Opacity="0.01"
+                                            BackgroundColor="Transparent"
+                                            DateSelected="OnBirthDateSelected" />
+                            </Grid>
                         </Border>
-                        <Label x:Name="AgeLabel" Text="" TextColor="#8FA3B8" FontSize="12" />
+                        <Label x:Name="AgeLabel" Text="" TextColor="#8FA3B8" FontSize="12" IsVisible="False" />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="6">
@@ -152,9 +171,21 @@
                     <VerticalStackLayout Spacing="6">
                         <Label Text="PROGRAM" Style="{StaticResource FieldLabel}" />
                         <Border Style="{StaticResource FieldBorder}">
-                            <Entry x:Name="ProgramEntry" Placeholder="e.g., BS Information Technology"
-                                   TextColor="White" PlaceholderColor="#4F657B"
-                                   BackgroundColor="Transparent" />
+                            <Picker x:Name="ProgramPicker"
+                                    Title="Select"
+                                    TextColor="White"
+                                    TitleColor="#4F657B"
+                                    BackgroundColor="Transparent">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>BS Information Technology</x:String>
+                                        <x:String>BS Computer Science</x:String>
+                                        <x:String>BS Meteorology</x:String>
+                                        <x:String>BS Biology</x:String>
+                                        <x:String>BS Chemistry</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
                         </Border>
                     </VerticalStackLayout>
 
@@ -171,6 +202,8 @@
                                             <x:String>2nd Year</x:String>
                                             <x:String>3rd Year</x:String>
                                             <x:String>4th Year</x:String>
+                                            <x:String>5th Year</x:String>
+                                            <x:String>6th Year</x:String>
                                         </x:Array>
                                     </Picker.ItemsSource>
                                 </Picker>
@@ -180,9 +213,13 @@
                         <VerticalStackLayout Grid.Column="1" Spacing="6">
                             <Label Text="BLOC" Style="{StaticResource FieldLabel}" />
                             <Border Style="{StaticResource FieldBorder}">
-                                <Entry x:Name="BlocEntry" Placeholder="e.g., A"
-                                       TextColor="White" PlaceholderColor="#4F657B"
-                                       BackgroundColor="Transparent" MaxLength="2" />
+                                <Entry x:Name="BlocEntry"
+                                       Placeholder="e.g., A"
+                                       TextColor="White"
+                                       PlaceholderColor="#4F657B"
+                                       BackgroundColor="Transparent"
+                                       MaxLength="1"
+                                       TextChanged="OnBlocTextChanged" />
                             </Border>
                         </VerticalStackLayout>
                     </Grid>

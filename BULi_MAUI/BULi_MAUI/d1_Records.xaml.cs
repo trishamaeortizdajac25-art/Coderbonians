@@ -8,6 +8,11 @@ public partial class d1_Records : ContentPage
     private readonly List<StudentRecord> _allStudents = new();
     private readonly ObservableCollection<StudentRecord> _filteredStudents = new();
 
+    private static readonly HashSet<string> SurnamePrefixes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "de", "dela", "del", "delos", "san", "santa", "sto"
+    };
+
     private bool _isEditMode;
     public bool IsEditMode
     {
@@ -22,6 +27,48 @@ public partial class d1_Records : ContentPage
         }
     }
 
+    private Color _panelBackgroundColor = Color.FromArgb("#0D1B2A");
+    public Color PanelBackgroundColor
+    {
+        get => _panelBackgroundColor;
+        set { _panelBackgroundColor = value; OnPropertyChanged(); }
+    }
+
+    private Color _cardBackgroundColor = Color.FromArgb("#15263A");
+    public Color CardBackgroundColor
+    {
+        get => _cardBackgroundColor;
+        set { _cardBackgroundColor = value; OnPropertyChanged(); }
+    }
+
+    private Color _cardStrokeColor = Color.FromArgb("#22364D");
+    public Color CardStrokeColor
+    {
+        get => _cardStrokeColor;
+        set { _cardStrokeColor = value; OnPropertyChanged(); }
+    }
+
+    private Color _primaryTextColor = Colors.White;
+    public Color PrimaryTextColor
+    {
+        get => _primaryTextColor;
+        set { _primaryTextColor = value; OnPropertyChanged(); }
+    }
+
+    private Color _secondaryTextColor = Color.FromArgb("#8FA3B8");
+    public Color SecondaryTextColor
+    {
+        get => _secondaryTextColor;
+        set { _secondaryTextColor = value; OnPropertyChanged(); }
+    }
+
+    private Color _accentBlueColor = Color.FromArgb("#87CEEB");
+    public Color AccentBlueColor
+    {
+        get => _accentBlueColor;
+        set { _accentBlueColor = value; OnPropertyChanged(); }
+    }
+
     public d1_Records()
     {
         InitializeComponent();
@@ -34,10 +81,109 @@ public partial class d1_Records : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        ApplyRecordsTheme();
+        await LoadRecordsAsync();
+    }
+
+    private void ApplyRecordsTheme()
+    {
+        bool isDark = SessionService.IsDarkMode;
         ThemeService.ApplyTheme(this);
 
-        base.OnAppearing();
-        await LoadRecordsAsync();
+        var panelBg = isDark ? Color.FromArgb("#0D1B2A") : Color.FromArgb("#FFFFFF");
+        var cardBg = isDark ? Color.FromArgb("#15263A") : Color.FromArgb("#F1F5F9");
+        var stroke = isDark ? Color.FromArgb("#22364D") : Color.FromArgb("#CBD5E1");
+        var primaryText = isDark ? Colors.White : Color.FromArgb("#0F172A");
+        var secondaryText = isDark ? Color.FromArgb("#8FA3B8") : Color.FromArgb("#475569");
+        var labelText = isDark ? Color.FromArgb("#B0C4DE") : Color.FromArgb("#334155");
+        var detailText = isDark ? Color.FromArgb("#DCE6F2") : Color.FromArgb("#1E293B");
+        var placeholderText = isDark ? Color.FromArgb("#6E859E") : Color.FromArgb("#64748B");
+        var linkBlue = isDark ? Color.FromArgb("#87CEEB") : Color.FromArgb("#0284C7");
+
+        PanelBackgroundColor = panelBg;
+        CardBackgroundColor = cardBg;
+        CardStrokeColor = stroke;
+        PrimaryTextColor = primaryText;
+        SecondaryTextColor = secondaryText;
+        AccentBlueColor = linkBlue;
+
+        lblPageTitle.TextColor = primaryText;
+        lblRecordSummary.TextColor = secondaryText;
+
+        if (!IsEditMode)
+        {
+            btnEditMode.BackgroundColor = cardBg;
+            btnEditMode.TextColor = primaryText;
+            btnEditMode.BorderColor = stroke;
+        }
+
+        btnFilterToggle.BackgroundColor = cardBg;
+        btnFilterToggle.TextColor = linkBlue;
+        btnFilterToggle.BorderColor = stroke;
+
+        btnSelectAll.BackgroundColor = cardBg;
+        btnSelectAll.BorderColor = stroke;
+
+        FilterPanel.BackgroundColor = panelBg;
+        FilterPanel.Stroke = new SolidColorBrush(stroke);
+        lblFilterHeader.TextColor = secondaryText;
+        lblFilterStatus.TextColor = labelText;
+        lblFilterProgram.TextColor = labelText;
+        lblFilterYear.TextColor = labelText;
+        lblFilterBlock.TextColor = labelText;
+
+        Picker[] pickers = [pickerFilterStatus, pickerFilterProgram, pickerFilterYear, pickerStatus, pickerCrudProgram];
+        foreach (var picker in pickers)
+        {
+            picker.BackgroundColor = cardBg;
+            picker.TextColor = primaryText;
+            picker.TitleColor = placeholderText;
+        }
+
+        Entry[] entries = [txtFilterBlock, txtStudentId, txtStudentName, txtBloc];
+        foreach (var entry in entries)
+        {
+            entry.BackgroundColor = cardBg;
+            entry.TextColor = primaryText;
+            entry.PlaceholderColor = placeholderText;
+        }
+
+        btnResetFilters.BackgroundColor = cardBg;
+        btnResetFilters.TextColor = labelText;
+
+        StudentDetailCard.BackgroundColor = panelBg;
+        StudentDetailCard.Stroke = new SolidColorBrush(stroke);
+        DetailAvatarBorder.BackgroundColor = cardBg;
+        DetailDivider.Color = stroke;
+        lblDetailInitials.TextColor = primaryText;
+        lblDetailName.TextColor = primaryText;
+        lblDetailStudentId.TextColor = linkBlue;
+
+        Label[] detailLabels =
+        [
+            lblDetailProgram,
+            lblDetailYearBlock,
+            lblDetailGenderBirthdate,
+            lblDetailContact,
+            lblDetailEmail,
+            lblDetailAddress
+        ];
+        foreach (var lbl in detailLabels)
+            lbl.TextColor = detailText;
+
+        btnReturnToRecords.BackgroundColor = cardBg;
+        btnReturnToRecords.TextColor = primaryText;
+        btnReturnToRecords.BorderColor = stroke;
+
+        CrudFormCard.BackgroundColor = panelBg;
+        CrudFormCard.Stroke = new SolidColorBrush(stroke);
+        lblCrudTitle.TextColor = primaryText;
+        btnCloseCrud.TextColor = secondaryText;
+        lblCrudSelectionHint.TextColor = secondaryText;
+
+        Label[] crudLabels = [lblCrudStudentId, lblCrudStudentName, lblCrudBloc, lblCrudStatus, lblCrudProgram];
+        foreach (var lbl in crudLabels)
+            lbl.TextColor = labelText;
     }
 
     private async Task LoadRecordsAsync()
@@ -146,9 +292,11 @@ public partial class d1_Records : ContentPage
     {
         IsEditMode = !IsEditMode;
         btnEditMode.Text = IsEditMode ? "Done" : "Edit";
-        btnEditMode.BackgroundColor = IsEditMode ? Color.FromArgb("#FFA500") : Color.FromArgb("#15263A");
-        btnEditMode.TextColor = IsEditMode ? Color.FromArgb("#0D1B2A") : Colors.White;
+        btnEditMode.BackgroundColor = IsEditMode ? Color.FromArgb("#FFA500") : CardBackgroundColor;
+        btnEditMode.TextColor = IsEditMode ? Color.FromArgb("#0D1B2A") : PrimaryTextColor;
+        btnEditMode.BorderColor = IsEditMode ? Color.FromArgb("#FFA500") : CardStrokeColor;
 
+        btnAddNew.Text = IsEditMode ? "Update" : "+ Add New";
         btnSelectAll.IsVisible = IsEditMode;
 
         if (!IsEditMode)
@@ -177,49 +325,120 @@ public partial class d1_Records : ContentPage
             s.IsSelected = anyUnselected;
     }
 
-    private void OnOpenAddModalClicked(object? sender, EventArgs e)
+    private static string? NormalizeStatus(string? raw)
     {
-        var selected = _allStudents.Where(s => s.IsSelected).ToList();
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
 
-        if (selected.Count > 1)
+        return raw.Trim().ToLowerInvariant() switch
         {
-            lblCrudTitle.Text = $"Batch Update ({selected.Count} Students)";
-            txtStudentId.Text = "(Multiple Selected)";
-            txtStudentName.Text = "(Multiple Selected)";
-            txtStudentId.IsEnabled = false;
-            txtStudentName.IsEnabled = false;
-            txtBloc.Text = string.Empty;
-            txtProgram.Text = string.Empty;
-            btnAddStudent.IsEnabled = false;
-            btnUpdateStudent.IsEnabled = true;
-            btnDeleteStudent.IsEnabled = true;
+            "active" => "Active",
+            "dropped" => "Dropped",
+            "on leave" => "On Leave",
+            "graduated" => "Graduated",
+            _ => null
+        };
+    }
+
+    private static (string FirstName, string? MiddleName, string LastName, string BaseUsername) ParseStudentNameAndUsername(string fullName)
+    {
+        string[] parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return ("Student", null, "User", "user.student");
+
+        if (parts.Length == 1)
+        {
+            string cleanSingle = CleanToken(parts[0]);
+            string fallback = string.IsNullOrEmpty(cleanSingle) ? "student" : cleanSingle;
+            return (parts[0], null, parts[0], $"{fallback}.{fallback}");
         }
-        else if (selected.Count == 1)
+
+        int lastStartIndex = parts.Length - 1;
+
+        if (parts.Length >= 3)
         {
-            var student = selected[0];
-            lblCrudTitle.Text = "Update Student Record";
-            txtStudentId.Text = student.StudentNumber;
-            txtStudentName.Text = student.DisplayName;
-            txtBloc.Text = student.Block;
-            txtProgram.Text = student.Program;
-            txtStudentId.IsEnabled = true;
-            txtStudentName.IsEnabled = true;
-            btnAddStudent.IsEnabled = false;
-            btnUpdateStudent.IsEnabled = true;
-            btnDeleteStudent.IsEnabled = true;
+            string prevClean = CleanToken(parts[^2]);
+            if (SurnamePrefixes.Contains(prevClean))
+            {
+                lastStartIndex = parts.Length - 2;
+                if (parts.Length >= 4 && CleanToken(parts[^3]).Equals("de", StringComparison.OrdinalIgnoreCase))
+                    lastStartIndex = parts.Length - 3;
+            }
+        }
+
+        string firstName = parts[0];
+        string? middleName = lastStartIndex > 1
+            ? string.Join(" ", parts[1..lastStartIndex])
+            : null;
+        string lastName = string.Join(" ", parts[lastStartIndex..]);
+
+        string givenCombined = string.IsNullOrWhiteSpace(middleName)
+            ? CleanToken(firstName)
+            : $"{CleanToken(firstName)}{CleanToken(middleName)}";
+        string surnameCombined = CleanToken(lastName);
+
+        if (string.IsNullOrEmpty(givenCombined)) givenCombined = "student";
+        if (string.IsNullOrEmpty(surnameCombined)) surnameCombined = "user";
+
+        return (firstName, middleName, lastName, $"{surnameCombined}.{givenCombined}");
+    }
+
+    private static string CleanToken(string input) =>
+        new string(input.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+
+    private async void OnOpenAddModalClicked(object? sender, EventArgs e)
+    {
+        if (IsEditMode)
+        {
+            var selected = _allStudents.Where(s => s.IsSelected).ToList();
+            if (selected.Count == 0)
+            {
+                await DisplayAlertAsync("No Selection", "Please select at least one student record to update.", "OK");
+                return;
+            }
+
+            btnAddStudent.IsVisible = false;
+            btnUpdateStudent.IsVisible = true;
+            btnDeleteStudent.IsVisible = true;
+
+            if (selected.Count > 1)
+            {
+                lblCrudTitle.Text = $"Batch Update ({selected.Count} Students)";
+                txtStudentId.Text = "(Multiple Selected)";
+                txtStudentName.Text = "(Multiple Selected)";
+                txtStudentId.IsEnabled = false;
+                txtStudentName.IsEnabled = false;
+                txtBloc.Text = string.Empty;
+                pickerCrudProgram.SelectedItem = null;
+                pickerStatus.SelectedItem = null;
+            }
+            else
+            {
+                var student = selected[0];
+                lblCrudTitle.Text = "Update Student Record";
+                txtStudentId.Text = student.StudentNumber;
+                txtStudentName.Text = student.DisplayName;
+                txtBloc.Text = student.Block;
+                pickerCrudProgram.SelectedItem = d2_SetUp.TryNormalizeProgram(student.Program, out string normProg) ? normProg : null;
+                pickerStatus.SelectedItem = NormalizeStatus(student.Status) ?? "Active";
+                txtStudentId.IsEnabled = true;
+                txtStudentName.IsEnabled = true;
+            }
         }
         else
         {
+            btnAddStudent.IsVisible = true;
+            btnUpdateStudent.IsVisible = false;
+            btnDeleteStudent.IsVisible = false;
+
             lblCrudTitle.Text = "Add Student Record";
             txtStudentId.Text = string.Empty;
             txtStudentName.Text = string.Empty;
             txtBloc.Text = string.Empty;
-            txtProgram.Text = string.Empty;
+            pickerCrudProgram.SelectedItem = null;
+            pickerStatus.SelectedItem = "Active";
             txtStudentId.IsEnabled = true;
             txtStudentName.IsEnabled = true;
-            btnAddStudent.IsEnabled = true;
-            btnUpdateStudent.IsEnabled = false;
-            btnDeleteStudent.IsEnabled = false;
         }
 
         CrudFormOverlay.IsVisible = true;
@@ -234,8 +453,9 @@ public partial class d1_Records : ContentPage
     {
         string studentNumber = txtStudentId.Text?.Trim() ?? string.Empty;
         string fullName = txtStudentName.Text?.Trim() ?? string.Empty;
-        string bloc = txtBloc.Text?.Trim().ToUpperInvariant() ?? string.Empty;
-        string program = txtProgram.Text?.Trim() ?? string.Empty;
+        string bloc = d2_SetUp.KeepSingleBlocLetter(txtBloc.Text);
+        string program = pickerCrudProgram.SelectedItem?.ToString() ?? string.Empty;
+        string status = pickerStatus.SelectedItem?.ToString() ?? "Active";
 
         if (string.IsNullOrWhiteSpace(studentNumber) || string.IsNullOrWhiteSpace(fullName))
         {
@@ -243,14 +463,8 @@ public partial class d1_Records : ContentPage
             return;
         }
 
-        string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        string firstName = nameParts.Length > 0 ? nameParts[0] : "Student";
-        string lastName = nameParts.Length > 1 ? nameParts[^1] : "User";
-        string? middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
-
-        string cleanFirst = new string(firstName.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
-        string cleanLast = new string(lastName.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
-        string autoUsername = $"{cleanFirst}.{cleanLast}.{Random.Shared.Next(100, 999)}";
+        var (firstName, middleName, lastName, baseUsername) = ParseStudentNameAndUsername(fullName);
+        const string defaultPassword = "student123";
 
         btnAddStudent.IsEnabled = false;
         try
@@ -269,15 +483,22 @@ public partial class d1_Records : ContentPage
                 Email = null,
                 Address = null,
                 Birthdate = null,
-                Status = "Active"
+                Status = status
             };
 
-            bool added = await SisWriteService.AddStudentRecordAsync(newRecord, autoUsername, "student123");
-            if (added)
+            var result = await SisWriteService.AddStudentWithAutoUsernameAsync(newRecord, baseUsername, defaultPassword);
+            if (result.Success)
             {
                 CrudFormOverlay.IsVisible = false;
                 await LoadRecordsAsync();
-                await DisplayAlertAsync("Added", $"Student added!\nUsername: {autoUsername}\nPassword: student123", "OK");
+                await DisplayAlertAsync(
+                    "Account Created",
+                    $"Student added!\nUsername: {result.Username}\nPassword: {defaultPassword}",
+                    "OK");
+            }
+            else
+            {
+                await DisplayAlertAsync("Insert Error", result.ErrorMessage ?? "Could not create student record.", "OK");
             }
         }
         catch (Exception ex)
@@ -289,11 +510,15 @@ public partial class d1_Records : ContentPage
             btnAddStudent.IsEnabled = true;
         }
     }
+
     private async void OnUpdateStudentClicked(object? sender, EventArgs e)
     {
         var selected = _allStudents.Where(s => s.IsSelected).ToList();
         if (selected.Count == 0)
             return;
+
+        string? chosenProgram = pickerCrudProgram.SelectedItem?.ToString();
+        string? chosenStatus = pickerStatus.SelectedItem?.ToString();
 
         btnUpdateStudent.IsEnabled = false;
         try
@@ -313,20 +538,25 @@ public partial class d1_Records : ContentPage
                 student.FirstName = nameParts.Length > 0 ? nameParts[0] : student.FirstName;
                 student.LastName = nameParts.Length > 1 ? nameParts[^1] : student.LastName;
                 student.MiddleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
-                student.Block = string.IsNullOrWhiteSpace(txtBloc.Text) ? student.Block : txtBloc.Text.Trim().ToUpperInvariant();
-                student.Program = string.IsNullOrWhiteSpace(txtProgram.Text) ? student.Program : txtProgram.Text.Trim();
+                student.FullName = string.Empty;
+                student.Block = string.IsNullOrWhiteSpace(txtBloc.Text) ? student.Block : d2_SetUp.KeepSingleBlocLetter(txtBloc.Text);
+                if (!string.IsNullOrWhiteSpace(chosenProgram))
+                    student.Program = chosenProgram;
+                if (!string.IsNullOrWhiteSpace(chosenStatus))
+                    student.Status = chosenStatus;
 
                 await SisWriteService.UpdateStudentProfileAsync(student);
             }
             else
             {
-                // Batch update Bloc and/or Program for all selected students
                 foreach (var student in selected)
                 {
                     if (!string.IsNullOrWhiteSpace(txtBloc.Text))
-                        student.Block = txtBloc.Text.Trim().ToUpperInvariant();
-                    if (!string.IsNullOrWhiteSpace(txtProgram.Text))
-                        student.Program = txtProgram.Text.Trim();
+                        student.Block = d2_SetUp.KeepSingleBlocLetter(txtBloc.Text);
+                    if (!string.IsNullOrWhiteSpace(chosenProgram))
+                        student.Program = chosenProgram;
+                    if (!string.IsNullOrWhiteSpace(chosenStatus))
+                        student.Status = chosenStatus;
 
                     await SisWriteService.UpdateStudentProfileAsync(student);
                 }

@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Packaging;
 using ScottPlot;
 
 namespace BULi_MAUI;
@@ -19,15 +20,58 @@ public partial class e1_Graphs : ContentPage
                 RenderCurrentChart();
         };
 
-        StylePlotTheme();
+        ApplyGraphsTheme();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        ThemeService.ApplyTheme(this);
+        ApplyGraphsTheme();
         await Task.Delay(100);
         await LoadAnalyticsDataAsync();
+    }
+
+    private void ApplyGraphsTheme()
+    {
+        bool isDark = SessionService.IsDarkMode;
+        ThemeService.ApplyTheme(this);
+
+        var cardBg = isDark ? Microsoft.Maui.Graphics.Color.FromArgb("#0D1B2A") : Microsoft.Maui.Graphics.Color.FromArgb("#FFFFFF");
+        var btnBg = isDark ? Microsoft.Maui.Graphics.Color.FromArgb("#15263A") : Microsoft.Maui.Graphics.Color.FromArgb("#F1F5F9");
+        var stroke = isDark ? Microsoft.Maui.Graphics.Color.FromArgb("#22364D") : Microsoft.Maui.Graphics.Color.FromArgb("#CBD5E1");
+        var primaryText = isDark ? Microsoft.Maui.Graphics.Colors.White : Microsoft.Maui.Graphics.Color.FromArgb("#0F172A");
+        var linkBlue = isDark ? Microsoft.Maui.Graphics.Color.FromArgb("#87CEEB") : Microsoft.Maui.Graphics.Color.FromArgb("#0284C7");
+
+        lblAnalyticsTitle.TextColor = primaryText;
+        lblChartTitle.TextColor = primaryText;
+
+        ChartCard.BackgroundColor = cardBg;
+        ChartCard.Stroke = new SolidColorBrush(stroke);
+
+        if (_showingProgramChart)
+        {
+            btnProgramChart.BackgroundColor = Microsoft.Maui.Graphics.Color.FromArgb("#FFA500");
+            btnProgramChart.TextColor = Microsoft.Maui.Graphics.Color.FromArgb("#0D1B2A");
+
+            btnYearChart.BackgroundColor = btnBg;
+            btnYearChart.TextColor = primaryText;
+            btnYearChart.BorderColor = stroke;
+        }
+        else
+        {
+            btnYearChart.BackgroundColor = Microsoft.Maui.Graphics.Color.FromArgb("#FFA500");
+            btnYearChart.TextColor = Microsoft.Maui.Graphics.Color.FromArgb("#0D1B2A");
+
+            btnProgramChart.BackgroundColor = btnBg;
+            btnProgramChart.TextColor = primaryText;
+            btnProgramChart.BorderColor = stroke;
+        }
+
+        btnRefreshChart.BackgroundColor = btnBg;
+        btnRefreshChart.TextColor = linkBlue;
+        btnRefreshChart.BorderColor = stroke;
+
+        StylePlotTheme();
     }
 
     private void StylePlotTheme()
@@ -140,13 +184,7 @@ public partial class e1_Graphs : ContentPage
     {
         _showingProgramChart = true;
         lblChartTitle.Text = "Enrolled Students per Program Distribution";
-
-        btnProgramChart.BackgroundColor = Microsoft.Maui.Graphics.Color.FromArgb("#FFA500");
-        btnProgramChart.TextColor = Microsoft.Maui.Graphics.Color.FromArgb("#0D1B2A");
-
-        btnYearChart.BackgroundColor = Microsoft.Maui.Graphics.Color.FromArgb("#15263A");
-        btnYearChart.TextColor = Microsoft.Maui.Graphics.Colors.White;
-
+        ApplyGraphsTheme();
         RenderCurrentChart();
     }
 
@@ -154,13 +192,7 @@ public partial class e1_Graphs : ContentPage
     {
         _showingProgramChart = false;
         lblChartTitle.Text = "What Year They're In";
-
-        btnYearChart.BackgroundColor = Microsoft.Maui.Graphics.Color.FromArgb("#FFA500");
-        btnYearChart.TextColor = Microsoft.Maui.Graphics.Color.FromArgb("#0D1B2A");
-
-        btnProgramChart.BackgroundColor = Microsoft.Maui.Graphics.Color.FromArgb("#15263A");
-        btnProgramChart.TextColor = Microsoft.Maui.Graphics.Colors.White;
-
+        ApplyGraphsTheme();
         RenderCurrentChart();
     }
 

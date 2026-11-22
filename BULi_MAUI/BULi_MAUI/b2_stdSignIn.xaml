@@ -4,140 +4,166 @@
              x:Class="BULi_MAUI.b2_stdSignIn"
              Shell.NavBarIsVisible="False">
 
-    <!-- Matching Rich Navy Blue Gradient Background -->
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-            <GradientStop Color="#050B14" Offset="0.0" />
-            <GradientStop Color="#0D1B2A" Offset="0.5" />
-            <GradientStop Color="#3E2723" Offset="1.0" />
-        </LinearGradientBrush>
-    </ContentPage.Background>
+    <Grid RowDefinitions="0.45*, 0.55*">
 
-    <!-- VerticalOptions="End" pins the entire form container to the bottom -->
-    <VerticalStackLayout VerticalOptions="End" 
-                         HorizontalOptions="Fill" 
-                         Padding="20, 0, 20, -10" 
-                         Spacing="0">
+        <!-- 1. FULL-SCREEN BACKGROUND IMAGE -->
+        <Image Grid.Row="0"
+               Grid.RowSpan="2"
+               Source="signin_icon.png"
+               Aspect="AspectFill"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill" />
 
-        <!-- Main Form Card Container (Attached to Bottom) -->
-        <Border StrokeShape="RoundRectangle 28,28,15,15"
-                BackgroundColor="#CC1E3F66" 
-                HorizontalOptions="Fill"
-                Padding="25, 20"
-                StrokeThickness="0">
-            
-            <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,-5" Radius="20" Opacity="0.4"/>
-            </Border.Shadow>
+        <!-- 2. DARK NAVY TO WARM ORANGE/BROWN GRADIENT OVERLAY -->
+        <BoxView Grid.Row="0"
+                 Grid.RowSpan="2"
+                 Opacity="0.93"
+                 InputTransparent="True">
+            <BoxView.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#050B14" Offset="0.0" />
+                    <GradientStop Color="#0D1B2A" Offset="0.5" />
+                    <GradientStop Color="#3E2723" Offset="1.0" />
+                </LinearGradientBrush>
+            </BoxView.Background>
+        </BoxView>
 
-            <VerticalStackLayout Spacing="20">
+        <!-- 3. LOGO CENTERED IN THE UPPER HALF -->
+        <Image Grid.Row="0"
+               Source="transparent.png"
+               Aspect="AspectFit"
+               WidthRequest="140"
+               HeightRequest="140"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               InputTransparent="True" />
 
-                <!-- TOP SECTION: Title and Subtext -->
-                <VerticalStackLayout Spacing="4" >
-                    <Label Text="Sign In" 
-                           TextColor="White" 
-                           FontSize="26" 
-                           FontAttributes="Bold"
-                           FontFamily="Montserrat"
-                           />
-                    
-                    <Label Text="Welcome back!" 
-                           TextColor="#B0C4DE" 
-                           FontSize="14" />
-                </VerticalStackLayout>
+        <!-- 4. SIGN IN FORM CARD PINNED TO BOTTOM -->
+        <VerticalStackLayout Grid.Row="0"
+                             Grid.RowSpan="2"
+                             VerticalOptions="End"
+                             HorizontalOptions="Fill"
+                             Padding="20, 0, 20, -10"
+                             Spacing="0">
 
-                <!-- INPUT FIELDS SECTION -->
-                <VerticalStackLayout Spacing="14">
-                    
-                    <!-- Username Field -->
+            <!-- Main Form Card Container (Attached to Bottom) -->
+            <Border StrokeShape="RoundRectangle 28,28,15,15"
+                    BackgroundColor="#CC1E3F66"
+                    HorizontalOptions="Fill"
+                    Padding="25, 20"
+                    StrokeThickness="0">
+
+                <Border.Shadow>
+                    <Shadow Brush="Black" Offset="0,-5" Radius="20" Opacity="0.4"/>
+                </Border.Shadow>
+
+                <VerticalStackLayout Spacing="20">
+
+                    <!-- TOP SECTION: Title and Subtext -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Username" TextColor="WhiteSmoke" FontSize="12" />
-                        <Border StrokeShape="RoundRectangle 22"
-                                BackgroundColor="#264D7A"
-                                StrokeThickness="0"
-                                HeightRequest="45"
-                                Padding="15, 0">
-                            <Entry x:Name="txtUsername" 
-                                   Placeholder="Enter your username" 
-                                   PlaceholderColor="#A0AAB0"
-                                   TextColor="White" 
-                                   BackgroundColor="Transparent"
-                                   VerticalOptions="Center"
-                                   ClearButtonVisibility="WhileEditing" />
-                        </Border>
+                        <Label Text="Sign In"
+                               TextColor="White"
+                               FontSize="26"
+                               FontAttributes="Bold"
+                               FontFamily="Montserrat" />
+
+                        <Label Text="Welcome back!"
+                               TextColor="#B0C4DE"
+                               FontSize="14" />
                     </VerticalStackLayout>
 
-                    <!-- Password Field -->
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="Password" TextColor="WhiteSmoke" FontSize="12" />
-                        <Border StrokeShape="RoundRectangle 22"
-                                BackgroundColor="#264D7A"
-                                StrokeThickness="0"
-                                HeightRequest="45"
-                                Padding="15, 0">
-                            <Entry x:Name="txtPassword" 
-                                   Placeholder="Enter your password" 
-                                   PlaceholderColor="#A0AAB0"
-                                   TextColor="White" 
-                                   BackgroundColor="Transparent"
-                                   IsPassword="True"
-                                   VerticalOptions="Center"
-                                   ClearButtonVisibility="WhileEditing" />
-                        </Border>
+                    <!-- INPUT FIELDS SECTION -->
+                    <VerticalStackLayout Spacing="14">
+
+                        <!-- Username Field -->
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Username" TextColor="WhiteSmoke" FontSize="12" />
+                            <Border StrokeShape="RoundRectangle 22"
+                                    BackgroundColor="#264D7A"
+                                    StrokeThickness="0"
+                                    HeightRequest="45"
+                                    Padding="15, 0">
+                                <Entry x:Name="txtUsername"
+                                       Placeholder="Enter your username"
+                                       PlaceholderColor="#A0AAB0"
+                                       TextColor="White"
+                                       BackgroundColor="Transparent"
+                                       VerticalOptions="Center"
+                                       ClearButtonVisibility="WhileEditing" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Password Field -->
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Password" TextColor="WhiteSmoke" FontSize="12" />
+                            <Border StrokeShape="RoundRectangle 22"
+                                    BackgroundColor="#264D7A"
+                                    StrokeThickness="0"
+                                    HeightRequest="45"
+                                    Padding="15, 0">
+                                <Entry x:Name="txtPassword"
+                                       Placeholder="Enter your password"
+                                       PlaceholderColor="#A0AAB0"
+                                       TextColor="White"
+                                       BackgroundColor="Transparent"
+                                       IsPassword="True"
+                                       VerticalOptions="Center"
+                                       ClearButtonVisibility="WhileEditing" />
+                            </Border>
+                        </VerticalStackLayout>
+
                     </VerticalStackLayout>
 
+                    <!-- REMEMBER ME -->
+                    <Grid ColumnDefinitions="Auto, *" VerticalOptions="Center">
+                        <CheckBox x:Name="chkRemember"
+                                  Color="White"
+                                  VerticalOptions="Center" />
+                        <Label Text="Remember Me"
+                               TextColor="WhiteSmoke"
+                               FontSize="12"
+                               Grid.Column="1"
+                               VerticalTextAlignment="Center" />
+                    </Grid>
+
+                    <!-- SIGN IN BUTTON -->
+                    <Button x:Name="btnSignIn"
+                            Text="Sign In"
+                            Clicked="OnSignInClicked"
+                            BackgroundColor="#0D1B2A"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="12"
+                            HeightRequest="48"
+                            Margin="0, 5, 0, 0" />
+
+                    <!-- CREATE ACCOUNT PROMPT ROW -->
+                    <HorizontalStackLayout HorizontalOptions="Center"
+                                           Spacing="5"
+                                           Margin="0, 5, 0, 0">
+                        <Label Text="Don't have an account yet?"
+                               TextColor="#B0C4DE"
+                               FontSize="13"
+                               VerticalTextAlignment="Center"
+                               Margin="0,0,0,70" />
+
+                        <Label Text="Sign Up"
+                               TextColor="White"
+                               FontAttributes="Bold"
+                               TextDecorations="Underline"
+                               FontSize="13"
+                               VerticalTextAlignment="Center"
+                               Margin="0,0,0,70">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCreateAccountTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
+
                 </VerticalStackLayout>
+            </Border>
 
-                <!-- REMEMBER ME  -->
-                <Grid ColumnDefinitions="Auto, *" VerticalOptions="Center">
-                    <CheckBox x:Name="chkRemember" 
-                              Color="White" 
-                              VerticalOptions="Center" />
-                    <Label Text="Remember Me" 
-                           TextColor="WhiteSmoke" 
-                           FontSize="12" 
-                           Grid.Column="1" 
-                           VerticalTextAlignment="Center" />
+        </VerticalStackLayout>
 
-
-                </Grid>
-
-                <!-- SIGN IN BUTTON -->
-                <Button x:Name="btnSignIn" 
-                        Text="Sign In" 
-                        Clicked="OnSignInClicked"
-                        BackgroundColor="#0D1B2A" 
-                        TextColor="White" 
-                        FontAttributes="Bold"
-                        CornerRadius="12"
-                        HeightRequest="48"
-                        Margin="0, 5, 0, 0" />
-
-                <!-- CREATE ACCOUNT PROMPT ROW -->
-                <HorizontalStackLayout HorizontalOptions="Center" 
-                                       Spacing="5" 
-                                       Margin="0, 5, 0, 0">
-                    <Label Text="Don't have an account yet?" 
-                           TextColor="#B0C4DE" 
-                           FontSize="13" 
-                           VerticalTextAlignment="Center"
-                           Margin="0,0,0,70"/>
-                    
-                    <Label Text="Sign Up" 
-                           TextColor="White" 
-                           FontAttributes="Bold" 
-                           TextDecorations="Underline"
-                           FontSize="13" 
-                           VerticalTextAlignment="Center"
-                           Margin="0,0,0,70">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnCreateAccountTapped" />
-                        </Label.GestureRecognizers>
-                    </Label>
-                </HorizontalStackLayout>
-
-            </VerticalStackLayout>
-        </Border>
-
-    </VerticalStackLayout>
+    </Grid>
 </ContentPage>

@@ -57,7 +57,7 @@ public static class SisWriteService
 
         const string sql = @"
             SELECT student_id, student_number, first_name, middle_name, last_name,
-                   gender, year_level, program, block, birthdate, contact_number, email, address
+                   gender, year_level, program, block, birthdate, contact_number, email, address, status
             FROM students
             WHERE username = @user AND password_hash = @hash AND is_deleted = 0
             LIMIT 1;";
@@ -88,7 +88,8 @@ public static class SisWriteService
             Birthdate = reader.IsDBNull(reader.GetOrdinal("birthdate")) ? null : reader.GetDateTime("birthdate"),
             ContactNumber = reader.IsDBNull(reader.GetOrdinal("contact_number")) ? "" : reader.GetString("contact_number"),
             Email = reader.IsDBNull(reader.GetOrdinal("email")) ? null : reader.GetString("email"),
-            Address = reader.IsDBNull(reader.GetOrdinal("address")) ? null : reader.GetString("address")
+            Address = reader.IsDBNull(reader.GetOrdinal("address")) ? null : reader.GetString("address"),
+            Status = reader.IsDBNull(reader.GetOrdinal("status")) ? "Active" : reader.GetString("status")
         };
     }
 
@@ -138,18 +139,41 @@ public static class SisWriteService
             : (false, "Current password is incorrect.");
     }
 
-    // 5. STUDENT SELF-EDIT (e2_stdMainPage & d2_SetUp)
-    // 5. STUDENT SELF-EDIT (e2_stdMainPage & d2_SetUp)
+    // 5. STUDENT SELF-EDIT & FACULTY RECORD UPDATE (e2_stdMainPage, d2_SetUp & d1_Records)
     public static async Task<bool> UpdateStudentProfileAsync(StudentRecord record, string? previousStudentNumber = null)
     {
         await using var conn = new MySqlConnection(ConnStr);
         await conn.OpenAsync();
 
+        string trimmedNumber = record.StudentNumber.Trim();
         string prevRaw = previousStudentNumber?.Trim() ?? string.Empty;
         string prevDigits = new string(prevRaw.Where(char.IsDigit).ToArray());
         string cachedUsername = Preferences.Default.Get("StudentSessionUsername", string.Empty).Trim();
 
-        const string updateSql = @"
+        // Free up student_number on any soft-deleted row so uq_students_number does not collide
+        if (!string.IsNullOrWhiteSpace(trimmedNumber))
+        {
+            const string freeDeletedSql = @"
+                UPDATE students
+                SET student_number = NULL
+                WHERE student_number = @snum
+                  AND COALESCE(is_deleted, 0) = 1
+                  AND student_id <> @id;";
+
+            await using var freeCmd = new MySqlCommand(freeDeletedSql, conn);
+            freeCmd.Parameters.AddWithValue("@snum", trimmedNumber);
+            freeCmd.Parameters.AddWithValue("@id", record.StudentId);
+            await freeCmd.ExecuteNonQueryAsync();
+        }
+
+        string whereClause = record.StudentId > 0
+            ? "student_id = @id AND COALESCE(is_deleted, 0) = 0"
+            : @"((@prevRaw <> '' AND student_number = @prevRaw)
+                 OR (@prevDigits <> '' AND REPLACE(student_number, '-', '') = @prevDigits)
+                 OR (@uname <> '' AND username = @uname))
+              AND COALESCE(is_deleted, 0) = 0";
+
+        string updateSql = $@"
             UPDATE students
             SET student_number = @snum,
                 first_name = @fn,
@@ -162,19 +186,14 @@ public static class SisWriteService
                 block = @block,
                 contact_number = @contact,
                 email = @email,
-                address = @addr
-            WHERE (
-                    (@id > 0 AND student_id = @id)
-                 OR (@prevRaw <> '' AND student_number = @prevRaw)
-                 OR (@prevDigits <> '' AND REPLACE(student_number, '-', '') = @prevDigits)
-                 OR (@uname <> '' AND username = @uname)
-                  )
-              AND COALESCE(is_deleted, 0) = 0;";
+                address = @addr,
+                status = COALESCE(@status, status)
+            WHERE {whereClause};";
 
         await using var cmd = new MySqlCommand(updateSql, conn);
-        cmd.Parameters.AddWithValue("@snum", record.StudentNumber.Trim());
+        cmd.Parameters.AddWithValue("@snum", string.IsNullOrWhiteSpace(trimmedNumber) ? DBNull.Value : trimmedNumber);
         cmd.Parameters.AddWithValue("@fn", record.FirstName.Trim());
-        cmd.Parameters.AddWithValue("@mn", (object?)record.MiddleName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@mn", string.IsNullOrWhiteSpace(record.MiddleName) ? DBNull.Value : record.MiddleName.Trim());
         cmd.Parameters.AddWithValue("@ln", record.LastName.Trim());
         cmd.Parameters.AddWithValue("@gender", string.IsNullOrWhiteSpace(record.Gender) ? DBNull.Value : record.Gender.Trim());
         cmd.Parameters.AddWithValue("@bday", (object?)record.Birthdate ?? DBNull.Value);
@@ -184,6 +203,7 @@ public static class SisWriteService
         cmd.Parameters.AddWithValue("@contact", string.IsNullOrWhiteSpace(record.ContactNumber) ? DBNull.Value : record.ContactNumber.Trim());
         cmd.Parameters.AddWithValue("@email", string.IsNullOrWhiteSpace(record.Email) ? DBNull.Value : record.Email.Trim());
         cmd.Parameters.AddWithValue("@addr", string.IsNullOrWhiteSpace(record.Address) ? DBNull.Value : record.Address.Trim());
+        cmd.Parameters.AddWithValue("@status", string.IsNullOrWhiteSpace(record.Status) ? DBNull.Value : record.Status.Trim());
         cmd.Parameters.AddWithValue("@id", record.StudentId);
         cmd.Parameters.AddWithValue("@prevRaw", prevRaw);
         cmd.Parameters.AddWithValue("@prevDigits", prevDigits);
@@ -193,18 +213,7 @@ public static class SisWriteService
         if (affected > 0)
             return true;
 
-        // Verify if the row exists (MySQL returns 0 affected rows when values are unchanged)
-        const string existsSql = @"
-            SELECT COUNT(1)
-            FROM students
-            WHERE (
-                    (@id > 0 AND student_id = @id)
-                 OR (@prevRaw <> '' AND student_number = @prevRaw)
-                 OR (@prevDigits <> '' AND REPLACE(student_number, '-', '') = @prevDigits)
-                 OR (@uname <> '' AND username = @uname)
-                  )
-              AND COALESCE(is_deleted, 0) = 0;";
-
+        string existsSql = $"SELECT COUNT(1) FROM students WHERE {whereClause};";
         await using var checkCmd = new MySqlCommand(existsSql, conn);
         checkCmd.Parameters.AddWithValue("@id", record.StudentId);
         checkCmd.Parameters.AddWithValue("@prevRaw", prevRaw);
@@ -227,6 +236,7 @@ public static class SisWriteService
 
         return await cmd.ExecuteNonQueryAsync() > 0;
     }
+
     // 8. STUDENT CHANGE PASSWORD (e2_stdMainPage)
     public static async Task<(bool Success, string Message)> ChangeStudentPasswordAsync(
         uint studentId, string? studentNumber, string oldPassword, string newPassword)
@@ -259,6 +269,20 @@ public static class SisWriteService
         await using var conn = new MySqlConnection(ConnStr);
         await conn.OpenAsync();
 
+        string trimmedNumber = s.StudentNumber.Trim();
+        if (!string.IsNullOrWhiteSpace(trimmedNumber))
+        {
+            const string freeDeletedSql = @"
+                UPDATE students
+                SET student_number = NULL
+                WHERE student_number = @snum
+                  AND COALESCE(is_deleted, 0) = 1;";
+
+            await using var freeCmd = new MySqlCommand(freeDeletedSql, conn);
+            freeCmd.Parameters.AddWithValue("@snum", trimmedNumber);
+            await freeCmd.ExecuteNonQueryAsync();
+        }
+
         const string sql = @"
             INSERT INTO students
                 (student_number, first_name, middle_name, last_name, gender, birthdate,
@@ -268,7 +292,7 @@ public static class SisWriteService
                  @yl, @prog, @block, @contact, @email, @addr, @status, @user, @hash);";
 
         await using var cmd = new MySqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@snum", string.IsNullOrWhiteSpace(s.StudentNumber) ? DBNull.Value : s.StudentNumber);
+        cmd.Parameters.AddWithValue("@snum", string.IsNullOrWhiteSpace(trimmedNumber) ? DBNull.Value : trimmedNumber);
         cmd.Parameters.AddWithValue("@fn", s.FirstName);
         cmd.Parameters.AddWithValue("@mn", string.IsNullOrWhiteSpace(s.MiddleName) ? DBNull.Value : s.MiddleName);
         cmd.Parameters.AddWithValue("@ln", s.LastName);
@@ -285,5 +309,32 @@ public static class SisWriteService
         cmd.Parameters.AddWithValue("@hash", HashPassword(password));
 
         return await cmd.ExecuteNonQueryAsync() > 0;
+    }
+
+    public static async Task<(bool Success, string Username, string? ErrorMessage)> AddStudentWithAutoUsernameAsync(
+    StudentRecord record, string baseUsername, string password)
+    {
+        string finalUsername = baseUsername;
+
+        for (int suffix = 1; suffix <= 99; suffix++)
+        {
+            finalUsername = suffix == 1 ? baseUsername : $"{baseUsername}{suffix}";
+            try
+            {
+                bool added = await AddStudentRecordAsync(record, finalUsername, password);
+                if (added)
+                    return (true, finalUsername, null);
+            }
+            catch (MySqlException ex) when (ex.Number == 1062 && ex.Message.Contains("username", StringComparison.OrdinalIgnoreCase))
+            {
+                // Try next numbered username
+            }
+            catch (Exception ex)
+            {
+                return (false, finalUsername, ex.Message);
+            }
+        }
+
+        return (false, finalUsername, "Could not generate a unique username after 99 attempts.");
     }
 }

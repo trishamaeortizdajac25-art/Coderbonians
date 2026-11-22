@@ -6,9 +6,9 @@ public static class SisReadService
 {
     public static string ConnectionString { get; set; } =
 #if ANDROID
-        "Server=10.0.2.2;Port=3306;Database=sis_db;User ID=root;Password=Trishamae1122;";
+        "Server=10.0.2.2;Port=3306;Database=sis_db;User ID=root;Password=nunez26*7;";
 #else
-        "Server=127.0.0.1;Port=3306;Database=sis_db;User ID=root;Password=Trishamae1122;";
+        "Server=127.0.0.1;Port=3306;Database=sis_db;User ID=root;Password=nunez26*7;";
 #endif
 
     public static async Task<List<StudentRecord>> GetStudentsAsync()

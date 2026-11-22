@@ -1,6 +1,10 @@
 using System.Collections.ObjectModel;
 using MySqlConnector;
 using ScottPlot;
+using MauiColor = Microsoft.Maui.Graphics.Color;
+using MauiColors = Microsoft.Maui.Graphics.Colors;
+using MauiLabel = Microsoft.Maui.Controls.Label;
+using SpColor = ScottPlot.Color;
 
 namespace BULi_MAUI;
 
@@ -8,8 +12,10 @@ public partial class c1_HomePage : ContentPage
 {
     public static string CurrentSessionUsername { get; set; } = string.Empty;
     public static string CurrentSessionPassword { get; set; } = string.Empty;
+    public static string CurrentTeacherFirstName { get; set; } = string.Empty;
 
     private readonly ObservableCollection<StudentRecord> _recentStudents = new();
+    private readonly List<Border> _trackedRecentBorders = new();
     private int[] _lastProgramCounts = [0, 0, 0, 0, 0];
     private bool _isPasswordVisible;
 
@@ -34,19 +40,147 @@ public partial class c1_HomePage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        ThemeService.ApplyTheme(this, btnThemeToggle);
-        await LoadTeacherUsernameFromDbAsync();
+        ApplyAllThemes();
+        await LoadTeacherInfoFromDbAsync();
         RefreshProfileVisuals();
         await Task.Delay(100);
         await LoadOverviewDataAsync();
     }
 
-    private static async Task LoadTeacherUsernameFromDbAsync()
+    private void OnRecentCardLoaded(object? sender, EventArgs e)
     {
-        if (!string.IsNullOrWhiteSpace(CurrentSessionUsername))
-            return;
+        if (sender is Border border)
+        {
+            if (!_trackedRecentBorders.Contains(border))
+                _trackedRecentBorders.Add(border);
 
-        if (!uint.TryParse(SessionService.UserId, out uint teacherId) || teacherId == 0)
+            StyleRecentBorder(border, SessionService.IsDarkMode);
+        }
+    }
+
+    private static void StyleRecentBorder(Border border, bool isDark)
+    {
+        border.BackgroundColor = isDark ? MauiColor.FromArgb("#15263A") : MauiColor.FromArgb("#FFFFFF");
+        border.Stroke = new SolidColorBrush(isDark ? MauiColor.FromArgb("#22364D") : MauiColor.FromArgb("#CBD5E1"));
+
+        var primaryText = isDark ? MauiColors.White : MauiColor.FromArgb("#0F172A");
+        var linkBlue = isDark ? MauiColor.FromArgb("#87CEEB") : MauiColor.FromArgb("#0284C7");
+
+        if (border.Content is Grid grid)
+        {
+            foreach (var child in grid.Children)
+            {
+                if (child is VerticalStackLayout stack)
+                {
+                    int idx = 0;
+                    foreach (var item in stack.Children)
+                    {
+                        if (item is MauiLabel lbl)
+                        {
+                            lbl.TextColor = idx == 0 ? primaryText : linkBlue;
+                            idx++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void ApplyAllThemes()
+    {
+        bool isDark = SessionService.IsDarkMode;
+        ThemeService.ApplyTheme(this, btnThemeToggle);
+
+        var panelBg = isDark ? MauiColor.FromArgb("#0D1B2A") : MauiColor.FromArgb("#F8FAFC");
+        var cardBg = isDark ? MauiColor.FromArgb("#0D1B2A") : MauiColor.FromArgb("#FFFFFF");
+        var altCardBg = isDark ? MauiColor.FromArgb("#15263A") : MauiColor.FromArgb("#F1F5F9");
+        var strokeColor = isDark ? MauiColor.FromArgb("#22364D") : MauiColor.FromArgb("#CBD5E1");
+        var primaryText = isDark ? MauiColors.White : MauiColor.FromArgb("#0F172A");
+        var secondaryText = isDark ? MauiColor.FromArgb("#8FA3B8") : MauiColor.FromArgb("#475569");
+        var linkBlue = isDark ? MauiColor.FromArgb("#87CEEB") : MauiColor.FromArgb("#0284C7");
+
+        // Program cards & ScottPlot panel
+        Border[] programCards = [cardBSIT, cardBSCS, cardBSMET, cardBSBIO, cardBSCHEM, cardPlot];
+        foreach (var card in programCards)
+        {
+            card.BackgroundColor = cardBg;
+            card.Stroke = new SolidColorBrush(strokeColor);
+        }
+
+        // Labels inside program cards & plot card
+        foreach (var card in programCards)
+        {
+            if (card.Content is IVisualTreeElement content)
+                StyleLabelsInside(content, primaryText, secondaryText, linkBlue);
+        }
+
+        // Recent student cards already loaded
+        foreach (var recentBorder in _trackedRecentBorders.ToList())
+        {
+            if (recentBorder.Handler is null)
+                _trackedRecentBorders.Remove(recentBorder);
+            else
+                StyleRecentBorder(recentBorder, isDark);
+        }
+
+        // Slide-out drawer
+        ProfileDrawerPanel.BackgroundColor = panelBg;
+        ProfileDrawerPanel.Stroke = new SolidColorBrush(strokeColor);
+
+        btnViewProfile.BackgroundColor = altCardBg;
+        btnViewProfile.BorderColor = strokeColor;
+        btnViewProfile.TextColor = primaryText;
+
+        btnChangePassword.BackgroundColor = altCardBg;
+        btnChangePassword.BorderColor = strokeColor;
+        btnChangePassword.TextColor = primaryText;
+
+        btnThemeToggle.Text = isDark ? "Light Mode" : "Dark Mode";
+        btnThemeToggle.BackgroundColor = altCardBg;
+        btnThemeToggle.BorderColor = strokeColor;
+        btnThemeToggle.TextColor = linkBlue;
+
+        lblProfileUsername.TextColor = primaryText;
+        lblProfilePassword.TextColor = isDark ? MauiColor.FromArgb("#DCE6F2") : primaryText;
+
+        StylePlotDarkTheme();
+    }
+
+    private static void StyleLabelsInside(
+        IVisualTreeElement node,
+        MauiColor primaryText,
+        MauiColor secondaryText,
+        MauiColor linkBlue)
+    {
+        if (node is MauiLabel lbl)
+        {
+            string? hex = lbl.TextColor?.ToArgbHex();
+            bool isAccent = hex is "#FFFFA500" or "#FFD97706" or "#FFFF6B6B" or "#FFDC2626"
+                or "#FF4ADE80" or "#FF16A34A" or "#FFFACC15" or "#FFCA8A04" or "#FF0D1B2A";
+
+            if (!isAccent)
+            {
+                if (hex is "#FF87CEEB" or "#FF0284C7")
+                    lbl.TextColor = linkBlue;
+                else if (hex is "#FF8FA3B8" or "#FFB0C4DE" or "#FF475569" or "#FF64748B" or "#FFDCE6F2")
+                    lbl.TextColor = secondaryText;
+                else
+                    lbl.TextColor = primaryText;
+            }
+        }
+
+        foreach (var child in node.GetVisualChildren())
+        {
+            StyleLabelsInside(child, primaryText, secondaryText, linkBlue);
+        }
+    }
+
+    private static async Task LoadTeacherInfoFromDbAsync()
+    {
+        bool hasId = uint.TryParse(SessionService.UserId, out uint teacherId) && teacherId > 0;
+        bool hasUser = !string.IsNullOrWhiteSpace(CurrentSessionUsername);
+
+        if (!hasId && !hasUser)
             return;
 
         try
@@ -54,21 +188,39 @@ public partial class c1_HomePage : ContentPage
             await using var conn = new MySqlConnection(SisReadService.ConnectionString);
             await conn.OpenAsync();
 
-            const string sql = "SELECT username FROM teachers WHERE teacher_id = @id LIMIT 1;";
-            await using var cmd = new MySqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@id", teacherId);
+            string sql = hasId
+                ? "SELECT username, first_name, last_name FROM teachers WHERE teacher_id = @id LIMIT 1;"
+                : "SELECT username, first_name, last_name FROM teachers WHERE username = @user LIMIT 1;";
 
-            object? result = await cmd.ExecuteScalarAsync();
-            if (result is string uname && !string.IsNullOrWhiteSpace(uname))
-                CurrentSessionUsername = uname;
+            await using var cmd = new MySqlCommand(sql, conn);
+            if (hasId)
+                cmd.Parameters.AddWithValue("@id", teacherId);
+            else
+                cmd.Parameters.AddWithValue("@user", CurrentSessionUsername.Trim());
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                string uname = reader.IsDBNull(reader.GetOrdinal("username")) ? string.Empty : reader.GetString("username");
+                string firstName = reader.IsDBNull(reader.GetOrdinal("first_name")) ? string.Empty : reader.GetString("first_name");
+                string lastName = reader.IsDBNull(reader.GetOrdinal("last_name")) ? string.Empty : reader.GetString("last_name");
+
+                if (!string.IsNullOrWhiteSpace(uname))
+                    CurrentSessionUsername = uname;
+
+                if (!string.IsNullOrWhiteSpace(firstName))
+                    CurrentTeacherFirstName = firstName.Trim();
+
+                string combined = $"{firstName} {lastName}".Trim();
+                if (!string.IsNullOrWhiteSpace(combined))
+                    SessionService.FullName = combined;
+            }
         }
         catch
         {
             // Fallback handled in RefreshProfileVisuals
         }
     }
-
-    // --- SEE ALL NAVIGATION ---
 
     private async void OnSeeAllRecordsClicked(object? sender, EventArgs e)
     {
@@ -78,12 +230,11 @@ public partial class c1_HomePage : ContentPage
             await Navigation.PushAsync(new d1_Records());
     }
 
-    // --- RIGHT SLIDE-OUT PROFILE DRAWER ---
-
     private async void OnToggleProfileDrawerTapped(object? sender, TappedEventArgs e)
     {
         if (!ProfileDrawerOverlay.IsVisible)
         {
+            ApplyAllThemes();
             ProfileDrawerOverlay.IsVisible = true;
             ProfileDrawerPanel.TranslationX = 280;
             await ProfileDrawerPanel.TranslateToAsync(0, 0, 220, Easing.CubicOut);
@@ -109,10 +260,16 @@ public partial class c1_HomePage : ContentPage
         ProfileDrawerPanel.TranslationX = 0;
     }
 
-    // --- 4 DRAWER BUTTONS ---
-
     private void RefreshProfileVisuals()
     {
+        string greetingName = !string.IsNullOrWhiteSpace(CurrentTeacherFirstName)
+            ? CurrentTeacherFirstName
+            : (!string.IsNullOrWhiteSpace(SessionService.FullName)
+                ? SessionService.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "Admin"
+                : "Admin");
+
+        lblGreeting.Text = $"Hello, {greetingName}!";
+
         string initials = SessionService.GetInitials();
         lblAdminInitials.Text = initials;
         lblModalProfileInitials.Text = initials;
@@ -155,8 +312,9 @@ public partial class c1_HomePage : ContentPage
     private async void OnViewProfileClicked(object? sender, EventArgs e)
     {
         await CloseProfileDrawerAsync();
-        await LoadTeacherUsernameFromDbAsync();
+        await LoadTeacherInfoFromDbAsync();
         RefreshProfileVisuals();
+        ApplyAllThemes();
         ViewProfileOverlay.IsVisible = true;
     }
 
@@ -286,7 +444,8 @@ public partial class c1_HomePage : ContentPage
     private void OnToggleThemeClicked(object? sender, EventArgs e)
     {
         SessionService.IsDarkMode = !SessionService.IsDarkMode;
-        ThemeService.ApplyTheme(this, btnThemeToggle);
+        ApplyAllThemes();
+        UpdateMiniPlot(_lastProgramCounts);
     }
 
     private async void OnLogOutClicked(object? sender, EventArgs e)
@@ -299,22 +458,21 @@ public partial class c1_HomePage : ContentPage
 
         CurrentSessionUsername = string.Empty;
         CurrentSessionPassword = string.Empty;
+        CurrentTeacherFirstName = string.Empty;
         SessionService.Logout();
         await Shell.Current.GoToAsync("//RolePage");
     }
 
-    // --- OVERVIEW DATA & MINI PLOT ---
-
     private void StylePlotDarkTheme()
     {
         bool isDark = SessionService.IsDarkMode;
-        var bg = isDark ? ScottPlot.Color.FromHex("#0D1B2A") : ScottPlot.Color.FromHex("#FFFFFF");
-        var fg = isDark ? ScottPlot.Color.FromHex("#DCE6F2") : ScottPlot.Color.FromHex("#0F172A");
-        var grid = isDark ? ScottPlot.Color.FromHex("#22364D") : ScottPlot.Color.FromHex("#CBD5E1");
+        var bg = isDark ? SpColor.FromHex("#0D1B2A") : SpColor.FromHex("#FFFFFF");
+        var fg = isDark ? SpColor.FromHex("#DCE6F2") : SpColor.FromHex("#0F172A");
+        var grid = isDark ? SpColor.FromHex("#22364D") : SpColor.FromHex("#CBD5E1");
 
         overviewPlot.BackgroundColor = isDark
-            ? Microsoft.Maui.Graphics.Color.FromArgb("#0D1B2A")
-            : Microsoft.Maui.Graphics.Color.FromArgb("#FFFFFF");
+            ? MauiColor.FromArgb("#0D1B2A")
+            : MauiColor.FromArgb("#FFFFFF");
 
         overviewPlot.Plot.FigureBackground.Color = bg;
         overviewPlot.Plot.DataBackground.Color = bg;
@@ -335,19 +493,13 @@ public partial class c1_HomePage : ContentPage
     {
         try
         {
-            var countsTask = SisReadService.GetProgramCountsAsync();
-            var studentsTask = SisReadService.GetStudentsAsync();
+            var students = await SisReadService.GetStudentsAsync();
 
-            await Task.WhenAll(countsTask, studentsTask);
-
-            var counts = countsTask.Result;
-            var students = studentsTask.Result;
-
-            int bsit = GetProgramCount(counts, "BS Information Technology");
-            int bscs = GetProgramCount(counts, "BS Computer Science");
-            int bsmet = GetProgramCount(counts, "BS Meteorology");
-            int bsbio = GetProgramCount(counts, "BS Biology");
-            int bschem = GetProgramCount(counts, "BS Chemistry");
+            int bsit = CountStudentsForProgram(students, "bsit", "information technology", "info tech");
+            int bscs = CountStudentsForProgram(students, "bscs", "computer science", "comp sci");
+            int bsmet = CountStudentsForProgram(students, "bsmet", "meteorology");
+            int bsbio = CountStudentsForProgram(students, "bsbio", "biology");
+            int bschem = CountStudentsForProgram(students, "bschem", "chemistry");
 
             _lastProgramCounts = [bsit, bscs, bsmet, bsbio, bschem];
 
@@ -359,15 +511,15 @@ public partial class c1_HomePage : ContentPage
                 lblCountBSBIO.Text = bsbio.ToString();
                 lblCountBSCHEM.Text = bschem.ToString();
 
-                int totalFromCounts = counts.Values.Sum();
-                lblTotalStudents.Text = $"{(totalFromCounts > 0 ? totalFromCounts : students.Count)} Total Students";
+                lblTotalStudents.Text = $"{students.Count} Total Students";
 
                 _recentStudents.Clear();
-                foreach (var student in students.OrderByDescending(s => s.StudentId).Take(4))
+                foreach (var student in students.TakeLast(4).Reverse())
                 {
                     _recentStudents.Add(student);
                 }
 
+                ApplyAllThemes();
                 UpdateMiniPlot(_lastProgramCounts);
             });
         }
@@ -375,6 +527,18 @@ public partial class c1_HomePage : ContentPage
         {
             await DisplayAlertAsync("Overview Error", ex.Message, "OK");
         }
+    }
+
+    private static int CountStudentsForProgram(List<StudentRecord> students, params string[] keywords)
+    {
+        return students.Count(s =>
+        {
+            if (string.IsNullOrWhiteSpace(s.Program))
+                return false;
+
+            string p = s.Program.Trim().ToLowerInvariant();
+            return keywords.Any(k => p == k || p.Contains(k, StringComparison.OrdinalIgnoreCase));
+        });
     }
 
     private void UpdateMiniPlot(int[] valuesInt)
@@ -390,7 +554,7 @@ public partial class c1_HomePage : ContentPage
         var bars = overviewPlot.Plot.Add.Bars(positions, values);
         foreach (var bar in bars.Bars)
         {
-            bar.FillColor = ScottPlot.Color.FromHex("#FFA500");
+            bar.FillColor = SpColor.FromHex("#FFA500");
             bar.Size = 0.55;
         }
 
@@ -413,7 +577,4 @@ public partial class c1_HomePage : ContentPage
 
         overviewPlot.Refresh();
     }
-
-    private static int GetProgramCount(Dictionary<string, int> counts, string programName) =>
-        counts.TryGetValue(programName, out int total) ? total : 0;
 }

@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace BULi_MAUI;
 
 public partial class d2_SetUp : ContentPage
@@ -6,7 +8,9 @@ public partial class d2_SetUp : ContentPage
     private const int TotalSteps = 3;
     private const int MaxContactLength = 11;
     private string _selectedPhotoPath = string.Empty;
+    private bool _hasBirthDateSelected;
     private bool _isFilteringInput;
+    private bool _suppressDateSelected;
 
     private readonly string[] _titles = { "Personal details", "Academic details", "Contact details" };
     private readonly string[] _subtitles =
@@ -19,36 +23,183 @@ public partial class d2_SetUp : ContentPage
     public d2_SetUp()
     {
         InitializeComponent();
+        _suppressDateSelected = true;
         BirthDatePicker.MaximumDate = DateTime.Today;
 
         if (SessionService.IsLoggedIn && SessionService.Role == "Student")
         {
-            NameEntry.Text = SessionService.FullName;
+            NameEntry.Text = ToTitleCaseName(SessionService.FullName);
             string cachedDbId = Preferences.Default.Get("StudentSessionDbId", string.Empty);
             StudentIdEntry.Text = SessionService.UserId == cachedDbId ? string.Empty : SessionService.UserId;
-            ProgramEntry.Text = SessionService.Program;
-            YearPicker.SelectedItem = string.IsNullOrWhiteSpace(SessionService.YearLevel) ? null : SessionService.YearLevel;
-            BlocEntry.Text = SessionService.Bloc;
+            ProgramPicker.SelectedItem = TryNormalizeProgram(SessionService.Program, out string normProg) ? normProg : null;
+            YearPicker.SelectedItem = NormalizeYearLevel(SessionService.YearLevel);
+            BlocEntry.Text = KeepSingleBlocLetter(SessionService.Bloc);
             GenderPicker.SelectedItem = string.IsNullOrWhiteSpace(SessionService.Gender) ? null : SessionService.Gender;
             ContactEntry.Text = SessionService.Contact;
             EmailEntry.Text = SessionService.Email;
-            BirthDatePicker.Date = SessionService.BirthDate ?? DateTime.Today.AddYears(-18);
+
+            if (SessionService.BirthDate.HasValue && SessionService.BirthDate.Value.Year >= 10)
+            {
+                _hasBirthDateSelected = true;
+                BirthDatePicker.Date = SessionService.BirthDate.Value;
+                BirthDateGhostEntry.Text = SessionService.BirthDate.Value.ToString("MM/dd/yyyy");
+                UpdateAge(SessionService.BirthDate.Value);
+            }
+            else
+            {
+                ResetBirthDateDefault();
+            }
 
             if (!string.IsNullOrWhiteSpace(SessionService.PhotoPath) && File.Exists(SessionService.PhotoPath))
             {
                 _selectedPhotoPath = SessionService.PhotoPath;
-                ProfileImage.Source = ImageSource.FromFile(_selectedPhotoPath);
+                SetAvatarPhoto(_selectedPhotoPath);
+            }
+            else
+            {
+                SetAvatarPhoto(null);
             }
         }
         else
         {
-            BirthDatePicker.Date = DateTime.Today.AddYears(-18);
+            ResetBirthDateDefault();
+            SetAvatarPhoto(null);
         }
 
-        UpdateAge(BirthDatePicker.Date);
+        RefreshAvatarInitials();
+        _suppressDateSelected = false;
     }
 
-    // --- REAL-TIME INPUT FILTERING & RED INLINE ERROR MESSAGES ---
+    private void ResetBirthDateDefault()
+    {
+        _hasBirthDateSelected = false;
+        BirthDatePicker.Date = DateTime.Today.AddYears(-18);
+        BirthDateGhostEntry.Text = string.Empty;
+        AgeLabel.Text = string.Empty;
+        AgeLabel.IsVisible = false;
+    }
+
+    internal static string KeepSingleBlocLetter(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
+
+        char? letter = raw.FirstOrDefault(char.IsLetter);
+        return letter.HasValue ? char.ToUpperInvariant(letter.Value).ToString() : string.Empty;
+    }
+
+    internal static string? NormalizeYearLevel(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        string cleaned = raw.Trim().ToLowerInvariant();
+        return cleaned switch
+        {
+            "1" or "1st" or "1st year" or "first year" => "1st Year",
+            "2" or "2nd" or "2nd year" or "second year" => "2nd Year",
+            "3" or "3rd" or "3rd year" or "third year" => "3rd Year",
+            "4" or "4th" or "4th year" or "fourth year" => "4th Year",
+            "5" or "5th" or "5th year" or "fifth year" => "5th Year",
+            "6" or "6th" or "6th year" or "sixth year" => "6th Year",
+            _ => null
+        };
+    }
+
+    internal static string ToTitleCaseName(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
+
+        string cleaned = string.Join(" ", raw.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(cleaned.ToLowerInvariant());
+    }
+
+    internal static bool TryNormalizeProgram(string? raw, out string normalizedProgram)
+    {
+        normalizedProgram = string.Empty;
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+
+        string p = string.Join(" ", raw.Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        if (p is "bsit" or "it" or "info tech" or "information technology" or "bs information technology" or "bs info tech")
+        {
+            normalizedProgram = "BS Information Technology";
+            return true;
+        }
+        if (p is "bscs" or "cs" or "comsci" or "comp sci" or "computer science" or "bs computer science" or "bs comsci" or "bs comp sci")
+        {
+            normalizedProgram = "BS Computer Science";
+            return true;
+        }
+        if (p is "bsmet" or "met" or "meteorology" or "bs meteorology")
+        {
+            normalizedProgram = "BS Meteorology";
+            return true;
+        }
+        if (p is "bsbio" or "bio" or "biologi" or "biology" or "bs biology" or "bs biologi")
+        {
+            normalizedProgram = "BS Biology";
+            return true;
+        }
+        if (p is "bschem" or "chem" or "chemistry" or "bs chemistry")
+        {
+            normalizedProgram = "BS Chemistry";
+            return true;
+        }
+
+        return false;
+    }
+
+    internal static int CalculateAge(DateTime birthDate)
+    {
+        var today = DateTime.Today;
+        int age = today.Year - birthDate.Year;
+        if (birthDate.Date > today.AddYears(-age))
+            age--;
+        return age;
+    }
+
+    private void OnBlocTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_isFilteringInput)
+            return;
+
+        string filtered = KeepSingleBlocLetter(e.NewTextValue);
+        if (BlocEntry.Text != filtered)
+        {
+            _isFilteringInput = true;
+            BlocEntry.Text = filtered;
+            BlocEntry.CursorPosition = filtered.Length;
+            _isFilteringInput = false;
+        }
+    }
+
+    private void RefreshAvatarInitials()
+    {
+        AvatarInitialsLabel.Text = SessionService.GetInitials(NameEntry.Text);
+    }
+
+    private void SetAvatarPhoto(string? path)
+    {
+        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+        {
+            ProfileImage.Source = ImageSource.FromFile(path);
+            ProfileImage.IsVisible = true;
+            AvatarInitialsLabel.IsVisible = false;
+        }
+        else
+        {
+            ProfileImage.Source = null;
+            ProfileImage.IsVisible = false;
+            AvatarInitialsLabel.IsVisible = true;
+        }
+    }
+
+    private void OnNameTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        RefreshAvatarInitials();
+    }
 
     private void OnStudentIdTextChanged(object? sender, TextChangedEventArgs e)
     {
@@ -120,8 +271,6 @@ public partial class d2_SetUp : ContentPage
         errorLabel.IsVisible = false;
     }
 
-    // --- STEP NAVIGATION & VALIDATION ---
-
     private async Task ShowStep()
     {
         Step1.IsVisible = _step == 1;
@@ -165,7 +314,7 @@ public partial class d2_SetUp : ContentPage
     private async void OnSkipTapped(object? sender, TappedEventArgs e)
     {
         string cleanId = new string((StudentIdEntry.Text ?? string.Empty).Where(c => char.IsDigit(c) || c == '-').ToArray());
-        string fullName = NameEntry.Text?.Trim() ?? string.Empty;
+        string fullName = ToTitleCaseName(NameEntry.Text);
 
         SessionService.LoginAsStudent(cleanId, fullName);
         SessionService.Program = string.Empty;
@@ -179,12 +328,41 @@ public partial class d2_SetUp : ContentPage
         await Shell.Current.GoToAsync("//StudentMain");
     }
 
+    private bool TryGetValidatedBirthDate(out DateTime? birthDate, out string? errorMessage)
+    {
+        birthDate = null;
+        errorMessage = null;
+
+        if (_hasBirthDateSelected && BirthDatePicker.Date.HasValue)
+        {
+            DateTime chosen = BirthDatePicker.Date.Value;
+            if (chosen.Year < 10 || chosen.Date > DateTime.Today || CalculateAge(chosen) < 10)
+            {
+                errorMessage = "Birth date/year cannot equate to an age below 10.";
+                return false;
+            }
+
+            birthDate = chosen;
+        }
+
+        return true;
+    }
+
     private async Task<bool> Validate()
     {
-        if (_step == 1 && string.IsNullOrWhiteSpace(NameEntry.Text))
+        if (_step == 1)
         {
-            await DisplayAlertAsync("Missing information", "Please enter your full name.", "OK");
-            return false;
+            if (string.IsNullOrWhiteSpace(NameEntry.Text))
+            {
+                await DisplayAlertAsync("Missing information", "Please enter your full name.", "OK");
+                return false;
+            }
+
+            if (!TryGetValidatedBirthDate(out _, out string? dateError))
+            {
+                await DisplayAlertAsync("Invalid birth date", dateError!, "OK");
+                return false;
+            }
         }
 
         if (_step == 2)
@@ -221,17 +399,22 @@ public partial class d2_SetUp : ContentPage
         NextButton.IsEnabled = false;
         try
         {
-            string fullName = NameEntry.Text?.Trim() ?? string.Empty;
+            if (!TryGetValidatedBirthDate(out DateTime? birthDate, out string? dateError))
+            {
+                await DisplayAlertAsync("Invalid birth date", dateError!, "OK");
+                return;
+            }
+
+            string fullName = ToTitleCaseName(NameEntry.Text);
             string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string firstName = nameParts.Length > 0 ? nameParts[0] : "Student";
             string lastName = nameParts.Length > 1 ? nameParts[^1] : "User";
             string? middleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
 
             string studentNumber = new string((StudentIdEntry.Text ?? string.Empty).Where(c => char.IsDigit(c) || c == '-').ToArray());
-            string program = ProgramEntry.Text?.Trim() ?? string.Empty;
+            string program = ProgramPicker.SelectedItem?.ToString() ?? string.Empty;
             string yearLevel = YearPicker.SelectedItem?.ToString() ?? string.Empty;
-            string bloc = BlocEntry.Text?.Trim().ToUpperInvariant() ?? string.Empty;
-            DateTime? birthDate = BirthDatePicker.Date;
+            string bloc = KeepSingleBlocLetter(BlocEntry.Text);
             string gender = GenderPicker.SelectedItem?.ToString() ?? string.Empty;
             string contact = ContactEntry.Text?.Trim() ?? string.Empty;
             string email = EmailEntry.Text?.Trim() ?? string.Empty;
@@ -289,25 +472,52 @@ public partial class d2_SetUp : ContentPage
         }
     }
 
-    private void OnBirthDateSelected(object? sender, DateChangedEventArgs e) => UpdateAge(e.NewDate);
+    private void OnBirthDateSelected(object? sender, DateChangedEventArgs e)
+    {
+        if (_suppressDateSelected)
+            return;
+
+        if (e.NewDate is DateTime selected)
+        {
+            _hasBirthDateSelected = true;
+            BirthDateGhostEntry.Text = selected.ToString("MM/dd/yyyy");
+            UpdateAge(selected);
+        }
+    }
 
     private void UpdateAge(DateTime? birthDate)
     {
-        if (birthDate is null)
+        if (!_hasBirthDateSelected || birthDate is null)
+        {
+            AgeLabel.Text = string.Empty;
+            AgeLabel.IsVisible = false;
             return;
+        }
 
-        var today = DateTime.Today;
-        int age = today.Year - birthDate.Value.Year;
-        if (birthDate.Value.Date > today.AddYears(-age))
-            age--;
-
+        int age = CalculateAge(birthDate.Value);
         AgeLabel.Text = $"Age: {age}";
+        AgeLabel.IsVisible = true;
     }
 
     private async void OnPhotoTapped(object? sender, TappedEventArgs e)
     {
         try
         {
+            if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
+            {
+                string action = await DisplayActionSheetAsync("Profile Photo", "Cancel", null, "Change Photo", "Remove Photo");
+                if (action == "Remove Photo")
+                {
+                    _selectedPhotoPath = string.Empty;
+                    SessionService.PhotoPath = string.Empty;
+                    SetAvatarPhoto(null);
+                    RefreshAvatarInitials();
+                    return;
+                }
+                if (action != "Change Photo")
+                    return;
+            }
+
             var photos = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions
             {
                 SelectionLimit = 1
@@ -325,7 +535,8 @@ public partial class d2_SetUp : ContentPage
             }
 
             _selectedPhotoPath = destPath;
-            ProfileImage.Source = ImageSource.FromFile(destPath);
+            SessionService.PhotoPath = destPath;
+            SetAvatarPhoto(destPath);
         }
         catch (Exception)
         {

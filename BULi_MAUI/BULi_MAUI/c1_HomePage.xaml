@@ -20,10 +20,10 @@
         <ScrollView Padding="18, 26, 18, 20">
             <VerticalStackLayout Spacing="14">
 
-                <!-- HEADER: HELLO ADMIN + OVERVIEW TITLE + PROFILE PICTURE -->
+                <!-- HEADER: HELLO FACULTY + OVERVIEW TITLE + PROFILE PICTURE -->
                 <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                        <Label Text="Hello, Admin!" TextColor="#FFA500" FontSize="13" FontAttributes="Bold" />
+                        <Label x:Name="lblGreeting" Text="Hello, Admin!" TextColor="#FFA500" FontSize="13" FontAttributes="Bold" />
                         <Label Text="Overview" TextColor="White" FontSize="24" FontAttributes="Bold" />
                         <Label x:Name="lblTotalStudents" Text="0 Total Students" TextColor="#8FA3B8" FontSize="12" />
                     </VerticalStackLayout>
@@ -64,7 +64,8 @@
                            CharacterSpacing="1" />
 
                     <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8">
-                        <Border Grid.Column="0"
+                        <Border x:Name="cardBSIT"
+                                Grid.Column="0"
                                 BackgroundColor="#0D1B2A"
                                 Stroke="#22364D"
                                 StrokeThickness="1"
@@ -77,7 +78,8 @@
                             </VerticalStackLayout>
                         </Border>
 
-                        <Border Grid.Column="1"
+                        <Border x:Name="cardBSCS"
+                                Grid.Column="1"
                                 BackgroundColor="#0D1B2A"
                                 Stroke="#22364D"
                                 StrokeThickness="1"
@@ -90,7 +92,8 @@
                             </VerticalStackLayout>
                         </Border>
 
-                        <Border Grid.Column="2"
+                        <Border x:Name="cardBSMET"
+                                Grid.Column="2"
                                 BackgroundColor="#0D1B2A"
                                 Stroke="#22364D"
                                 StrokeThickness="1"
@@ -105,7 +108,8 @@
                     </Grid>
 
                     <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
-                        <Border Grid.Column="0"
+                        <Border x:Name="cardBSBIO"
+                                Grid.Column="0"
                                 BackgroundColor="#0D1B2A"
                                 Stroke="#22364D"
                                 StrokeThickness="1"
@@ -118,7 +122,8 @@
                             </VerticalStackLayout>
                         </Border>
 
-                        <Border Grid.Column="1"
+                        <Border x:Name="cardBSCHEM"
+                                Grid.Column="1"
                                 BackgroundColor="#0D1B2A"
                                 Stroke="#22364D"
                                 StrokeThickness="1"
@@ -141,7 +146,8 @@
                            FontAttributes="Bold"
                            CharacterSpacing="1" />
 
-                    <Border BackgroundColor="#0D1B2A"
+                    <Border x:Name="cardPlot"
+                            BackgroundColor="#0D1B2A"
                             Stroke="#22364D"
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 14"
@@ -192,7 +198,8 @@
                                         StrokeThickness="1"
                                         StrokeShape="RoundRectangle 14"
                                         Padding="12"
-                                        Margin="0,0,0,8">
+                                        Margin="0,0,0,8"
+                                        Loaded="OnRecentCardLoaded">
                                     <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
                                         <Border Grid.Column="0"
                                                 StrokeShape="RoundRectangle 20"

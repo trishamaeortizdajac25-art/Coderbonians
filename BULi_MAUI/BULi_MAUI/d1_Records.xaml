@@ -18,10 +18,10 @@
         <!-- MAIN RECORDS LAYOUT -->
         <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="20, 28, 20, 20" RowSpacing="12">
 
-            <!-- ROW 0: HEADER + ADD NEW + EDIT -->
+            <!-- ROW 0: HEADER + ADD NEW / UPDATE + EDIT -->
             <Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto" ColumnSpacing="10">
                 <VerticalStackLayout Spacing="2" VerticalOptions="Center">
-                    <Label Text="Student Records" TextColor="White" FontSize="22" FontAttributes="Bold" />
+                    <Label x:Name="lblPageTitle" Text="Student Records" TextColor="White" FontSize="22" FontAttributes="Bold" />
                     <Label x:Name="lblRecordSummary" Text="0 Records" TextColor="#8FA3B8" FontSize="12" />
                 </VerticalStackLayout>
 
@@ -91,11 +91,11 @@
                         StrokeShape="RoundRectangle 14"
                         Padding="14">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="FILTER RECORDS" TextColor="#8FA3B8" FontSize="11" FontAttributes="Bold" CharacterSpacing="1" />
+                        <Label x:Name="lblFilterHeader" Text="FILTER RECORDS" TextColor="#8FA3B8" FontSize="11" FontAttributes="Bold" CharacterSpacing="1" />
 
                         <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
                             <VerticalStackLayout Spacing="4">
-                                <Label Text="Status" TextColor="#B0C4DE" FontSize="12" />
+                                <Label x:Name="lblFilterStatus" Text="Status" TextColor="#B0C4DE" FontSize="12" />
                                 <Picker x:Name="pickerFilterStatus"
                                         Title="All Statuses"
                                         TextColor="White"
@@ -115,7 +115,7 @@
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                <Label Text="Program" TextColor="#B0C4DE" FontSize="12" />
+                                <Label x:Name="lblFilterProgram" Text="Program" TextColor="#B0C4DE" FontSize="12" />
                                 <Picker x:Name="pickerFilterProgram"
                                         Title="All Programs"
                                         TextColor="White"
@@ -138,7 +138,7 @@
 
                         <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
                             <VerticalStackLayout Spacing="4">
-                                <Label Text="Year Level" TextColor="#B0C4DE" FontSize="12" />
+                                <Label x:Name="lblFilterYear" Text="Year Level" TextColor="#B0C4DE" FontSize="12" />
                                 <Picker x:Name="pickerFilterYear"
                                         Title="All Years"
                                         TextColor="White"
@@ -160,7 +160,7 @@
                             </VerticalStackLayout>
 
                             <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                <Label Text="Block" TextColor="#B0C4DE" FontSize="12" />
+                                <Label x:Name="lblFilterBlock" Text="Block" TextColor="#B0C4DE" FontSize="12" />
                                 <Entry x:Name="txtFilterBlock"
                                        Placeholder="e.g. A, B"
                                        PlaceholderColor="#6E859E"
@@ -170,7 +170,8 @@
                             </VerticalStackLayout>
                         </Grid>
 
-                        <Button Text="Reset Filters"
+                        <Button x:Name="btnResetFilters"
+                                Text="Reset Filters"
                                 Clicked="OnResetFiltersClicked"
                                 BackgroundColor="#15263A"
                                 TextColor="#B0C4DE"
@@ -189,8 +190,8 @@
                             SelectionMode="None">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="local:StudentRecord">
-                        <Border BackgroundColor="#15263A"
-                                Stroke="#22364D"
+                        <Border BackgroundColor="{Binding Source={x:Reference RootPage}, Path=CardBackgroundColor}"
+                                Stroke="{Binding Source={x:Reference RootPage}, Path=CardStrokeColor}"
                                 StrokeThickness="1"
                                 StrokeShape="RoundRectangle 14"
                                 Padding="14"
@@ -208,7 +209,7 @@
 
                                 <Border Grid.Column="1"
                                         StrokeShape="RoundRectangle 22"
-                                        BackgroundColor="#0D1B2A"
+                                        BackgroundColor="{Binding Source={x:Reference RootPage}, Path=PanelBackgroundColor}"
                                         Stroke="#FFA500"
                                         StrokeThickness="1"
                                         WidthRequest="44"
@@ -216,7 +217,7 @@
                                         VerticalOptions="Center">
                                     <Grid>
                                         <Label Text="{Binding Initials}"
-                                               TextColor="White"
+                                               TextColor="{Binding Source={x:Reference RootPage}, Path=PrimaryTextColor}"
                                                FontAttributes="Bold"
                                                HorizontalTextAlignment="Center"
                                                VerticalTextAlignment="Center" />
@@ -226,9 +227,19 @@
                                 </Border>
 
                                 <VerticalStackLayout Grid.Column="2" Spacing="2" VerticalOptions="Center">
-                                    <Label Text="{Binding DisplayName}" TextColor="White" FontSize="14" FontAttributes="Bold" LineBreakMode="TailTruncation" />
-                                    <Label Text="{Binding SubtitleText}" TextColor="#87CEEB" FontSize="11" LineBreakMode="TailTruncation" />
-                                    <Label Text="{Binding ContactNumber}" TextColor="#8FA3B8" FontSize="11" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding DisplayName}"
+                                           TextColor="{Binding Source={x:Reference RootPage}, Path=PrimaryTextColor}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding SubtitleText}"
+                                           TextColor="{Binding Source={x:Reference RootPage}, Path=AccentBlueColor}"
+                                           FontSize="11"
+                                           LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding ContactNumber}"
+                                           TextColor="{Binding Source={x:Reference RootPage}, Path=SecondaryTextColor}"
+                                           FontSize="11"
+                                           LineBreakMode="TailTruncation" />
                                 </VerticalStackLayout>
 
                                 <Border Grid.Column="3"
@@ -272,7 +283,8 @@
               IsVisible="False"
               BackgroundColor="#B3000000"
               Padding="20">
-            <Border BackgroundColor="#0D1B2A"
+            <Border x:Name="StudentDetailCard"
+                    BackgroundColor="#0D1B2A"
                     Stroke="#22364D"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 18"
@@ -280,7 +292,8 @@
                     VerticalOptions="Center">
                 <VerticalStackLayout Spacing="14">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14">
-                        <Border StrokeShape="RoundRectangle 30"
+                        <Border x:Name="DetailAvatarBorder"
+                                StrokeShape="RoundRectangle 30"
                                 BackgroundColor="#15263A"
                                 Stroke="#FFA500"
                                 StrokeThickness="1.5"
@@ -299,7 +312,7 @@
                         </VerticalStackLayout>
                     </Grid>
 
-                    <BoxView HeightRequest="1" Color="#22364D" />
+                    <BoxView x:Name="DetailDivider" HeightRequest="1" Color="#22364D" />
 
                     <VerticalStackLayout Spacing="8">
                         <Label x:Name="lblDetailProgram" Text="Program: -" TextColor="#DCE6F2" FontSize="13" />
@@ -311,7 +324,8 @@
                         <Label x:Name="lblDetailStatus" Text="Status: -" TextColor="#FFA500" FontSize="13" FontAttributes="Bold" />
                     </VerticalStackLayout>
 
-                    <Button Text="Return to Records"
+                    <Button x:Name="btnReturnToRecords"
+                            Text="Return to Records"
                             Clicked="OnReturnToRecordsClicked"
                             BackgroundColor="#15263A"
                             TextColor="White"
@@ -330,7 +344,8 @@
               IsVisible="False"
               BackgroundColor="#B3000000"
               Padding="20">
-            <Border BackgroundColor="#0D1B2A"
+            <Border x:Name="CrudFormCard"
+                    BackgroundColor="#0D1B2A"
                     Stroke="#22364D"
                     StrokeThickness="1"
                     StrokeShape="RoundRectangle 18"
@@ -339,7 +354,8 @@
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*, Auto">
                         <Label x:Name="lblCrudTitle" Text="Manage Student Record" TextColor="White" FontSize="18" FontAttributes="Bold" />
-                        <Button Grid.Column="1"
+                        <Button x:Name="btnCloseCrud"
+                                Grid.Column="1"
                                 Text="Close"
                                 Clicked="OnCloseCrudOverlayClicked"
                                 BackgroundColor="Transparent"
@@ -355,7 +371,7 @@
                            FontSize="11" />
 
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Student ID" TextColor="#B0C4DE" FontSize="12" />
+                        <Label x:Name="lblCrudStudentId" Text="Student ID" TextColor="#B0C4DE" FontSize="12" />
                         <Entry x:Name="txtStudentId"
                                Placeholder="e.g. 2026-0001"
                                PlaceholderColor="#6E859E"
@@ -364,7 +380,7 @@
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Student Name" TextColor="#B0C4DE" FontSize="12" />
+                        <Label x:Name="lblCrudStudentName" Text="Student Name" TextColor="#B0C4DE" FontSize="12" />
                         <Entry x:Name="txtStudentName"
                                Placeholder="Full Name"
                                PlaceholderColor="#6E859E"
@@ -372,49 +388,83 @@
                                BackgroundColor="#15263A" />
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="Bloc" TextColor="#B0C4DE" FontSize="12" />
-                        <Entry x:Name="txtBloc"
-                               Placeholder="e.g. A, B"
-                               PlaceholderColor="#6E859E"
-                               TextColor="White"
-                               BackgroundColor="#15263A" />
-                    </VerticalStackLayout>
+                    <Grid ColumnDefinitions="0.4*, 0.6*" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label x:Name="lblCrudBloc" Text="Bloc" TextColor="#B0C4DE" FontSize="12" />
+                            <Entry x:Name="txtBloc"
+                                   Placeholder="e.g. A"
+                                   MaxLength="1"
+                                   PlaceholderColor="#6E859E"
+                                   TextColor="White"
+                                   BackgroundColor="#15263A" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                            <Label x:Name="lblCrudStatus" Text="Status" TextColor="#B0C4DE" FontSize="12" />
+                            <Picker x:Name="pickerStatus"
+                                    Title="Select Status"
+                                    TextColor="White"
+                                    TitleColor="#6E859E"
+                                    BackgroundColor="#15263A">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>Active</x:String>
+                                        <x:String>Dropped</x:String>
+                                        <x:String>On Leave</x:String>
+                                        <x:String>Graduated</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
+                        </VerticalStackLayout>
+                    </Grid>
 
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Program" TextColor="#B0C4DE" FontSize="12" />
-                        <Entry x:Name="txtProgram"
-                               Placeholder="e.g. BS Computer Science"
-                               PlaceholderColor="#6E859E"
-                               TextColor="White"
-                               BackgroundColor="#15263A" />
+                        <Label x:Name="lblCrudProgram" Text="Program" TextColor="#B0C4DE" FontSize="12" />
+                        <Picker x:Name="pickerCrudProgram"
+                                Title="Select Program"
+                                TextColor="White"
+                                TitleColor="#6E859E"
+                                BackgroundColor="#15263A">
+                            <Picker.ItemsSource>
+                                <x:Array Type="{x:Type x:String}">
+                                    <x:String>BS Information Technology</x:String>
+                                    <x:String>BS Computer Science</x:String>
+                                    <x:String>BS Meteorology</x:String>
+                                    <x:String>BS Biology</x:String>
+                                    <x:String>BS Chemistry</x:String>
+                                </x:Array>
+                            </Picker.ItemsSource>
+                        </Picker>
                     </VerticalStackLayout>
 
-                    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" Margin="0,8,0,0">
+                    <Grid x:Name="CrudActionButtonsGrid" ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,8,0,0">
                         <Button x:Name="btnAddStudent"
                                 Grid.Column="0"
+                                Grid.ColumnSpan="2"
                                 Text="Add Student"
                                 Clicked="OnAddStudentClicked"
                                 BackgroundColor="#FFA500"
                                 TextColor="#0D1B2A"
                                 FontAttributes="Bold"
-                                FontSize="12"
+                                FontSize="13"
                                 CornerRadius="10"
                                 HeightRequest="42" />
 
                         <Button x:Name="btnUpdateStudent"
-                                Grid.Column="1"
+                                Grid.Column="0"
+                                IsVisible="False"
                                 Text="Update"
                                 Clicked="OnUpdateStudentClicked"
                                 BackgroundColor="#1E3F66"
                                 TextColor="White"
                                 FontAttributes="Bold"
-                                FontSize="12"
+                                FontSize="13"
                                 CornerRadius="10"
                                 HeightRequest="42" />
 
                         <Button x:Name="btnDeleteStudent"
-                                Grid.Column="2"
+                                Grid.Column="1"
+                                IsVisible="False"
                                 Text="Delete"
                                 Clicked="OnDeleteStudentClicked"
                                 BackgroundColor="#3A151B"
@@ -422,7 +472,7 @@
                                 BorderColor="#FF6B6B"
                                 BorderWidth="1"
                                 FontAttributes="Bold"
-                                FontSize="12"
+                                FontSize="13"
                                 CornerRadius="10"
                                 HeightRequest="42" />
                     </Grid>

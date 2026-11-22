@@ -17,7 +17,7 @@
 
         <!-- HEADER & TOP CHART SWITCH BUTTONS -->
         <VerticalStackLayout Grid.Row="0" Spacing="10">
-            <Label Text="Student Analytics" TextColor="White" FontSize="22" FontAttributes="Bold" />
+            <Label x:Name="lblAnalyticsTitle" Text="Student Analytics" TextColor="White" FontSize="22" FontAttributes="Bold" />
 
             <HorizontalStackLayout Spacing="8">
                 <Button x:Name="btnProgramChart"
@@ -60,7 +60,8 @@
         </VerticalStackLayout>
 
         <!-- SCOTTPLOT CARD (UNCONNECTED UI SHELL) -->
-        <Border Grid.Row="1"
+        <Border x:Name="ChartCard"
+                Grid.Row="1"
                 BackgroundColor="#0D1B2A"
                 Stroke="#22364D"
                 StrokeThickness="1"
