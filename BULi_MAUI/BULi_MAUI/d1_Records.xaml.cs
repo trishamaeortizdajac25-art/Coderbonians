@@ -110,6 +110,12 @@ public partial class d1_Records : ContentPage
         lblPageTitle.TextColor = primaryText;
         lblRecordSummary.TextColor = secondaryText;
 
+        SearchBarBorder.BackgroundColor = cardBg;
+        SearchBarBorder.Stroke = new SolidColorBrush(stroke);
+        txtSearchRecords.TextColor = primaryText;
+        txtSearchRecords.PlaceholderColor = placeholderText;
+        btnClearSearch.TextColor = secondaryText;
+
         if (!IsEditMode)
         {
             btnEditMode.BackgroundColor = cardBg;
@@ -209,6 +215,19 @@ public partial class d1_Records : ContentPage
         }
     }
 
+    private void OnSearchTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        btnClearSearch.IsVisible = !string.IsNullOrEmpty(e.NewTextValue);
+        ApplyFilters();
+    }
+
+    private void OnClearSearchClicked(object? sender, EventArgs e)
+    {
+        txtSearchRecords.Text = string.Empty;
+        btnClearSearch.IsVisible = false;
+        ApplyFilters();
+    }
+
     private void OnToggleFiltersClicked(object? sender, EventArgs e)
     {
         FilterPanel.IsVisible = !FilterPanel.IsVisible;
@@ -222,6 +241,8 @@ public partial class d1_Records : ContentPage
 
     private void OnResetFiltersClicked(object? sender, EventArgs e)
     {
+        txtSearchRecords.Text = string.Empty;
+        btnClearSearch.IsVisible = false;
         pickerFilterStatus.SelectedIndex = 0;
         pickerFilterProgram.SelectedIndex = 0;
         pickerFilterYear.SelectedIndex = 0;
@@ -231,12 +252,25 @@ public partial class d1_Records : ContentPage
 
     private void ApplyFilters()
     {
+        string search = txtSearchRecords.Text?.Trim() ?? string.Empty;
         string status = pickerFilterStatus.SelectedItem?.ToString() ?? "All";
         string program = pickerFilterProgram.SelectedItem?.ToString() ?? "All";
         string year = pickerFilterYear.SelectedItem?.ToString() ?? "All";
         string block = txtFilterBlock.Text?.Trim() ?? string.Empty;
 
         IEnumerable<StudentRecord> query = _allStudents;
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(s =>
+                (!string.IsNullOrWhiteSpace(s.DisplayName) && s.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(s.StudentNumber) && s.StudentNumber.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(s.Program) && s.Program.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(s.YearLevel) && s.YearLevel.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(s.Block) && s.Block.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(s.Email) && s.Email.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(s.ContactNumber) && s.ContactNumber.Contains(search, StringComparison.OrdinalIgnoreCase)));
+        }
 
         if (status != "All")
             query = query.Where(s => s.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
