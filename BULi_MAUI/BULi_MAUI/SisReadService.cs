@@ -6,9 +6,9 @@ public static class SisReadService
 {
     public static string ConnectionString { get; set; } =
 #if ANDROID
-        "Server=10.0.2.2;Port=3306;Database=sis_db;User ID=root;Password=nunez26*7;";
+        "Server=10.0.2.2;Port=3306;Database=sis_db;User ID=root;Password=Trishamae1122;";
 #else
-        "Server=127.0.0.1;Port=3306;Database=sis_db;User ID=root;Password=nunez26*7;";
+        "Server=127.0.0.1;Port=3306;Database=sis_db;User ID=root;Password=Trishamae1122;";
 #endif
 
     public static async Task<List<StudentRecord>> GetStudentsAsync()
@@ -24,7 +24,7 @@ public static class SisReadService
                    v.contact_number, v.email, v.address, v.status, s.profile_picture
             FROM vw_student_information v
             INNER JOIN students s ON s.student_id = v.student_id
-            ORDER BY v.last_name, v.first_name;";
+            ORDER BY v.student_id DESC;";
 
         await using var cmd = new MySqlCommand(sql, conn);
         await using var reader = await cmd.ExecuteReaderAsync();
