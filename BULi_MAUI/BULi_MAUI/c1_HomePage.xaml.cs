@@ -105,7 +105,6 @@ public partial class c1_HomePage : ContentPage
         var secondaryText = isDark ? MauiColor.FromArgb("#8FA3B8") : MauiColor.FromArgb("#475569");
         var linkBlue = isDark ? MauiColor.FromArgb("#87CEEB") : MauiColor.FromArgb("#0284C7");
 
-        // Program cards & plot panel
         Border[] programCards = [cardBSIT, cardBSCS, cardBSMET, cardBSBIO, cardBSCHEM, cardPlot];
         foreach (var card in programCards)
         {
@@ -113,14 +112,12 @@ public partial class c1_HomePage : ContentPage
             card.Stroke = new SolidColorBrush(strokeColor);
         }
 
-        // Labels inside program cards & plot card
         foreach (var card in programCards)
         {
             if (card.Content is IVisualTreeElement content)
                 StyleLabelsInside(content, primaryText, secondaryText, linkBlue);
         }
 
-        // Recent student cards already loaded
         foreach (var recentBorder in _trackedRecentBorders.ToList())
         {
             if (recentBorder.Handler is null)
@@ -129,7 +126,6 @@ public partial class c1_HomePage : ContentPage
                 StyleRecentBorder(recentBorder, isDark);
         }
 
-        // Slide-out drawer
         ProfileDrawerPanel.BackgroundColor = panelBg;
         ProfileDrawerPanel.Stroke = new SolidColorBrush(strokeColor);
 
@@ -232,6 +228,20 @@ public partial class c1_HomePage : ContentPage
     {
         if (Shell.Current is not null)
             await Shell.Current.GoToAsync($"//{nameof(d1_Records)}");
+        else
+            await Navigation.PushAsync(new d1_Records());
+    }
+
+    private async void OnRecentStudentCardTapped(object? sender, TappedEventArgs e)
+    {
+        var student = e.Parameter as StudentRecord
+            ?? (sender as BindableObject)?.BindingContext as StudentRecord;
+
+        if (student is null)
+            return;
+
+        if (Shell.Current is not null)
+            await Shell.Current.GoToAsync($"//{nameof(d1_Records)}?selectedStudentId={student.StudentId}");
         else
             await Navigation.PushAsync(new d1_Records());
     }
@@ -523,7 +533,7 @@ public partial class c1_HomePage : ContentPage
                 lblTotalStudents.Text = $"{students.Count} Total Students";
 
                 _recentStudents.Clear();
-                foreach (var student in students.TakeLast(4).Reverse())
+                foreach (var student in students.OrderByDescending(s => s.StudentId).Take(4))
                 {
                     _recentStudents.Add(student);
                 }
