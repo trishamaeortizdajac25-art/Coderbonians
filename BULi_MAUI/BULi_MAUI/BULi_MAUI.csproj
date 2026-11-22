@@ -54,7 +54,7 @@
 	    <!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\transp_icon.svg"
 			Color="#000435"
-			BaseSize="300,200" />
+			BaseSize="360,240" />
 
 		
 		<!-- Images -->
