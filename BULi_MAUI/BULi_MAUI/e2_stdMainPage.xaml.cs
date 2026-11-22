@@ -558,8 +558,8 @@ public partial class e2_stdMainPage : ContentPage
             bool saveLater = await DisplayAlertAsync(
                 "Incomplete Information",
                 $"If your details are not complete, your information may not fully reflect on the teacher side.\n\nMissing: {string.Join(", ", missingFields)}\n\nAre you sure you're done?",
-                accept: "No",
-                cancel: "Yes");
+                accept: "Yes",
+                cancel: "No");
 
             if (!saveLater)
                 return;
