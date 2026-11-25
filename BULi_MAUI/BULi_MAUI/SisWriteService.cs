@@ -6,9 +6,6 @@ namespace BULi_MAUI;
 
 public static class SisWriteService
 {
-    private static string ConnStr => SisReadService.ConnectionString;
-
-    // Converts plain text password to SHA-256 lowercase hex (matches MySQL SHA2(..., 256))
     public static string HashPassword(string plainPassword)
     {
         byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(plainPassword));
@@ -21,8 +18,7 @@ public static class SisWriteService
     {
         try
         {
-            await using var conn = new MySqlConnection(ConnStr);
-            await conn.OpenAsync();
+            await using var conn = await SisReadService.OpenConnectionAsync();
 
             const string sql = @"
                 INSERT INTO students
@@ -52,8 +48,7 @@ public static class SisWriteService
     // 2. STUDENT SIGN IN (b2_stdSignIn)
     public static async Task<StudentRecord?> AuthenticateStudentAsync(string username, string password)
     {
-        await using var conn = new MySqlConnection(ConnStr);
-        await conn.OpenAsync();
+        await using var conn = await SisReadService.OpenConnectionAsync();
 
         const string sql = @"
             SELECT student_id, student_number, first_name, middle_name, last_name,
@@ -96,8 +91,7 @@ public static class SisWriteService
     // 3. TEACHER SIGN IN (b1_tcrSignIn)
     public static async Task<(bool Success, uint TeacherId, string FullName)> AuthenticateTeacherAsync(string username, string password)
     {
-        await using var conn = new MySqlConnection(ConnStr);
-        await conn.OpenAsync();
+        await using var conn = await SisReadService.OpenConnectionAsync();
 
         const string sql = @"
             SELECT teacher_id, first_name, last_name
@@ -120,8 +114,7 @@ public static class SisWriteService
     // 4. TEACHER CHANGE PASSWORD (c1_HomePage)
     public static async Task<(bool Success, string Message)> ChangeTeacherPasswordAsync(uint teacherId, string oldPassword, string newPassword)
     {
-        await using var conn = new MySqlConnection(ConnStr);
-        await conn.OpenAsync();
+        await using var conn = await SisReadService.OpenConnectionAsync();
 
         const string sql = @"
             UPDATE teachers
@@ -142,15 +135,13 @@ public static class SisWriteService
     // 5. STUDENT SELF-EDIT & FACULTY RECORD UPDATE (e2_stdMainPage, d2_SetUp & d1_Records)
     public static async Task<bool> UpdateStudentProfileAsync(StudentRecord record, string? previousStudentNumber = null)
     {
-        await using var conn = new MySqlConnection(ConnStr);
-        await conn.OpenAsync();
+        await using var conn = await SisReadService.OpenConnectionAsync();
 
         string trimmedNumber = record.StudentNumber.Trim();
         string prevRaw = previousStudentNumber?.Trim() ?? string.Empty;
         string prevDigits = new string(prevRaw.Where(char.IsDigit).ToArray());
         string cachedUsername = Preferences.Default.Get("StudentSessionUsername", string.Empty).Trim();
 
-        // Free up student_number on any soft-deleted row so uq_students_number does not collide
         if (!string.IsNullOrWhiteSpace(trimmedNumber))
         {
             const string freeDeletedSql = @"
@@ -227,8 +218,7 @@ public static class SisWriteService
     // 6. SOFT DELETE STUDENT (e2_stdMainPage & d1_Records)
     public static async Task<bool> DeleteStudentAsync(uint studentId)
     {
-        await using var conn = new MySqlConnection(ConnStr);
-        await conn.OpenAsync();
+        await using var conn = await SisReadService.OpenConnectionAsync();
 
         const string sql = "UPDATE students SET is_deleted = 1 WHERE student_id = @id;";
         await using var cmd = new MySqlCommand(sql, conn);
@@ -241,8 +231,7 @@ public static class SisWriteService
     public static async Task<(bool Success, string Message)> ChangeStudentPasswordAsync(
         uint studentId, string? studentNumber, string oldPassword, string newPassword)
     {
-        await using var conn = new MySqlConnection(ConnStr);
-        await conn.OpenAsync();
+        await using var conn = await SisReadService.OpenConnectionAsync();
 
         const string sql = @"
             UPDATE students
@@ -266,8 +255,7 @@ public static class SisWriteService
     // 7. TEACHER INSERT RECORD (d1_Records)
     public static async Task<bool> AddStudentRecordAsync(StudentRecord s, string username, string password)
     {
-        await using var conn = new MySqlConnection(ConnStr);
-        await conn.OpenAsync();
+        await using var conn = await SisReadService.OpenConnectionAsync();
 
         string trimmedNumber = s.StudentNumber.Trim();
         if (!string.IsNullOrWhiteSpace(trimmedNumber))
@@ -312,7 +300,7 @@ public static class SisWriteService
     }
 
     public static async Task<(bool Success, string Username, string? ErrorMessage)> AddStudentWithAutoUsernameAsync(
-    StudentRecord record, string baseUsername, string password)
+        StudentRecord record, string baseUsername, string password)
     {
         string finalUsername = baseUsername;
 

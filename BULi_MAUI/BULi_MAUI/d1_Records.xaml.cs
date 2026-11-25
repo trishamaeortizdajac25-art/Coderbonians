@@ -13,6 +13,8 @@ public partial class d1_Records : ContentPage
         "de", "dela", "del", "delos", "san", "santa", "sto"
     };
 
+    private bool _isSanitizingStudentId;
+
     private bool _isEditMode;
     public bool IsEditMode
     {
@@ -76,6 +78,12 @@ public partial class d1_Records : ContentPage
         pickerFilterStatus.SelectedIndex = 0;
         pickerFilterProgram.SelectedIndex = 0;
         pickerFilterYear.SelectedIndex = 0;
+
+        txtStudentId.Keyboard = Keyboard.Telephone;
+        txtStudentId.TextChanged -= OnStudentIdTextChanged;
+        txtStudentId.TextChanged += OnStudentIdTextChanged;
+        txtStudentId.Loaded -= OnStudentIdLoaded;
+        txtStudentId.Loaded += OnStudentIdLoaded;
     }
 
     protected override async void OnAppearing()
@@ -83,6 +91,38 @@ public partial class d1_Records : ContentPage
         base.OnAppearing();
         ApplyRecordsTheme();
         await LoadRecordsAsync();
+    }
+
+    private void OnStudentIdLoaded(object? sender, EventArgs e)
+    {
+        txtStudentId.Keyboard = Keyboard.Telephone;
+        txtStudentId.TextChanged -= OnStudentIdTextChanged;
+        txtStudentId.TextChanged += OnStudentIdTextChanged;
+    }
+
+    private static string KeepDigitsAndDashes(string? raw)
+    {
+        if (string.IsNullOrEmpty(raw))
+            return string.Empty;
+
+        return new string(raw.Where(c => char.IsDigit(c) || c == '-').ToArray());
+    }
+
+    private void OnStudentIdTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_isSanitizingStudentId || sender is not Entry entry || !entry.IsEnabled)
+            return;
+
+        string current = e.NewTextValue ?? string.Empty;
+        string sanitized = KeepDigitsAndDashes(current);
+
+        if (current != sanitized)
+        {
+            _isSanitizingStudentId = true;
+            entry.Text = sanitized;
+            entry.CursorPosition = sanitized.Length;
+            _isSanitizingStudentId = false;
+        }
     }
 
     private void ApplyRecordsTheme()
@@ -438,9 +478,9 @@ public partial class d1_Records : ContentPage
             if (selected.Count > 1)
             {
                 lblCrudTitle.Text = $"Batch Update ({selected.Count} Students)";
+                txtStudentId.IsEnabled = false;
                 txtStudentId.Text = "(Multiple Selected)";
                 txtStudentName.Text = "(Multiple Selected)";
-                txtStudentId.IsEnabled = false;
                 txtStudentName.IsEnabled = false;
                 txtBloc.Text = string.Empty;
                 pickerCrudProgram.SelectedItem = null;
@@ -450,12 +490,12 @@ public partial class d1_Records : ContentPage
             {
                 var student = selected[0];
                 lblCrudTitle.Text = "Update Student Record";
-                txtStudentId.Text = student.StudentNumber;
+                txtStudentId.IsEnabled = true;
+                txtStudentId.Text = KeepDigitsAndDashes(student.StudentNumber);
                 txtStudentName.Text = student.DisplayName;
                 txtBloc.Text = student.Block;
                 pickerCrudProgram.SelectedItem = d2_SetUp.TryNormalizeProgram(student.Program, out string normProg) ? normProg : null;
                 pickerStatus.SelectedItem = NormalizeStatus(student.Status) ?? "Active";
-                txtStudentId.IsEnabled = true;
                 txtStudentName.IsEnabled = true;
             }
         }
@@ -466,12 +506,12 @@ public partial class d1_Records : ContentPage
             btnDeleteStudent.IsVisible = false;
 
             lblCrudTitle.Text = "Add Student Record";
+            txtStudentId.IsEnabled = true;
             txtStudentId.Text = string.Empty;
             txtStudentName.Text = string.Empty;
             txtBloc.Text = string.Empty;
             pickerCrudProgram.SelectedItem = null;
             pickerStatus.SelectedItem = "Active";
-            txtStudentId.IsEnabled = true;
             txtStudentName.IsEnabled = true;
         }
 
@@ -485,7 +525,7 @@ public partial class d1_Records : ContentPage
 
     private async void OnAddStudentClicked(object? sender, EventArgs e)
     {
-        string studentNumber = txtStudentId.Text?.Trim() ?? string.Empty;
+        string studentNumber = KeepDigitsAndDashes(txtStudentId.Text);
         string fullName = txtStudentName.Text?.Trim() ?? string.Empty;
         string bloc = d2_SetUp.KeepSingleBlocLetter(txtBloc.Text);
         string program = pickerCrudProgram.SelectedItem?.ToString() ?? string.Empty;
@@ -493,7 +533,7 @@ public partial class d1_Records : ContentPage
 
         if (string.IsNullOrWhiteSpace(studentNumber) || string.IsNullOrWhiteSpace(fullName))
         {
-            await DisplayAlertAsync("Missing Fields", "Please enter both Student ID and Student Name.", "OK");
+            await DisplayAlertAsync("Missing Fields", "Please enter both Student ID (numbers and dashes only) and Student Name.", "OK");
             return;
         }
 
@@ -567,8 +607,9 @@ public partial class d1_Records : ContentPage
                     return;
                 }
 
+                string cleanId = KeepDigitsAndDashes(txtStudentId.Text);
                 string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                student.StudentNumber = txtStudentId.Text?.Trim() ?? student.StudentNumber;
+                student.StudentNumber = string.IsNullOrWhiteSpace(cleanId) ? student.StudentNumber : cleanId;
                 student.FirstName = nameParts.Length > 0 ? nameParts[0] : student.FirstName;
                 student.LastName = nameParts.Length > 1 ? nameParts[^1] : student.LastName;
                 student.MiddleName = nameParts.Length > 2 ? string.Join(" ", nameParts[1..^1]) : null;
